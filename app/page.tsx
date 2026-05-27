@@ -5,8 +5,22 @@ export default function HomePage() {
     <main className="min-h-screen bg-[#071b11] p-6 text-white sm:p-10">
       <div className="mx-auto max-w-5xl space-y-8">
         <header>
-          <p className="mb-2 text-zinc-400">Rezerwacja biletow online</p>
-          <h1 className="text-4xl font-bold sm:text-6xl">Ogrod Bellingham</h1>
+          <div className="flex items-stretch gap-4 sm:gap-6">
+            <div className="flex min-h-[86px] shrink-0 items-center justify-center sm:min-h-[112px]">
+              <img
+                src="/logo.png"
+                alt="Logo Ogród Bellingham"
+                className="h-[52px] w-[52px] sm:h-[110px] sm:w-[110px]"
+              />
+            </div>
+
+            <div className="flex min-h-[86px] flex-col justify-center sm:min-h-[112px]">
+              <p className="mb-2 text-zinc-400">Kup wejściówkę do ogrodu</p>
+              <h1 className="text-4xl font-bold leading-tight sm:text-6xl">
+                Ogród Bellingham
+              </h1>
+            </div>
+          </div>
         </header>
 
         <div className="rounded-3xl border border-green-900 bg-[#0b2216] p-6 sm:p-10">

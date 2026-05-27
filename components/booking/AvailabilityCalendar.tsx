@@ -88,9 +88,9 @@ export function AvailabilityCalendar() {
   return (
     <section className="rounded-3xl border border-green-900 bg-[#0b2216] p-6 sm:p-8">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-xl font-semibold">Dostepne terminy</h3>
+        <h3 className="text-xl font-semibold">Ogród otwarty w dniach:</h3>
         <span className="rounded-full border border-green-800 bg-green-950 px-2 py-1 text-xs font-medium text-green-400">
-          LIVE
+          Ilość dostępnych biletów jest aktualizowana na bieżąco.
         </span>
       </div>
 
@@ -98,9 +98,9 @@ export function AvailabilityCalendar() {
         <p className="text-sm text-zinc-400">Brak terminow do wyswietlenia.</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {dates.map((item) => (
+          {dates.map((item, index) => (
             <article
-              key={item.date}
+              key={`${item.date}-${index}`}
               className={[
                 "rounded-2xl border p-4 transition",
                 item.soldOut
