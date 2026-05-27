@@ -2,117 +2,142 @@
 
 Minimalist online ticket booking application for "Ogrod Bellingham".
 
-This repository currently contains **Section 1 only**:
-- project initialization
-- strict TypeScript setup
-- TailwindCSS and ESLint setup
-- Docker + Docker Compose setup
-- base UI layout and placeholder homepage
-- initial shallow folder structure
+## Implemented sections
+
+- **Section 1**: project scaffold, Tailwind, ESLint, Docker, base UI
+- **Section 2**: environment validation, Google Sheets schema/types, Sheets client helpers
 
 ## Tech Stack
 
 - Next.js 15 (App Router)
 - TypeScript (strict mode)
 - TailwindCSS v4
-- ESLint
-- Docker (multi-stage build)
-- Docker Compose (local development)
+- Zod (runtime validation)
+- Google Sheets API (`googleapis`)
+- Docker + Docker Compose
 
-## Architecture Decisions (MVP First)
-
-### Why Next.js 15 + App Router
-- Stable, widely adopted, and production-ready.
-- Supports clear separation between UI and server-side API routes.
-- Good fit for Vercel deployment.
-
-### Why strict TypeScript
-- Improves reliability early.
-- Helps keep business logic understandable as features are added.
-- Prevents accidental `any`-driven complexity.
-
-### Why shallow folder structure
-- Easier onboarding and maintenance.
-- Avoids enterprise-style over-abstraction in MVP.
-- Keeps core app areas explicit: `app`, `components`, `lib`, `types`.
-
-### Why simple `lib/*` modules
-- Grouped by responsibility without repository or event-driven patterns.
-- Direct, readable integration points for future sections:
-  - `lib/sheets` for Google Sheets
-  - `lib/payments` for Przelewy24
-  - `lib/tickets` for pricing/stock/ticket helpers
-  - `lib/email` for sending tickets
-
-### Why Docker setup now
-- Reproducible local environment from day one.
-- Multi-stage Dockerfile for future production images.
-- Compose with fixed container name and mounted code volume for fast local iteration.
-
-## Current Project Structure
+## Project Structure
 
 ```txt
 app/
-  (public)/
-    layout.tsx
-    page.tsx
-  api/
-    availability/
-    checkout/
-    payment/
-      webhook/
-      return/
-  globals.css
-  layout.tsx
-components/
-  booking/
-  ui/
+  (public)/          # booking UI (placeholder)
+  api/               # API routes (placeholders for later sections)
 lib/
-  config/
-  sheets/
-  payments/
-  tickets/
-  email/
-  validation/
-  utils/
+  config/env.ts      # strict env loader (server-only)
+  sheets/            # Google Sheets client + helpers
+  validation/        # zod schemas (checkout, payment status)
 types/
-Dockerfile
-docker-compose.yml
-.env.example
+  booking.ts         # CheckoutPayload, PaymentStatus
+  sheets.ts          # DateRow, OrderRow
 ```
-
-## Local Development
-
-### 1) Node.js local
-```bash
-npm install
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000)
-
-### 2) Docker Compose local
-```bash
-docker compose up --build
-```
-Open [http://localhost:3000](http://localhost:3000)
 
 ## Environment Variables
 
-Copy:
+Copy the example file and fill in values:
+
 ```bash
 cp .env.example .env.local
 ```
 
-Only variable templates are defined now. Integrations are intentionally not implemented in Section 1.
+### Required (Section 2)
 
-## Out Of Scope in Section 1
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_APP_URL` | Public app URL (e.g. `http://localhost:3000`) |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Google service account email |
+| `GOOGLE_PRIVATE_KEY` | Service account private key (use `\n` for newlines) |
+| `GOOGLE_SHEETS_SPREADSHEET_ID` | Spreadsheet ID from the sheet URL |
 
-Not implemented yet:
-- Google Sheets integration
-- payment integration
+### Optional (future sections)
+
+| Variable | Used in |
+|----------|---------|
+| `P24_*` | Przelewy24 payments |
+| `RESEND_API_KEY`, `MAIL_FROM` | Ticket email delivery |
+
+Validation runs lazily via `getEnv()` in `lib/config/env.ts` when server code first needs configuration. This keeps `next build` working without secrets until API routes call server modules.
+
+## Google Sheets Schema (MVP)
+
+Create one spreadsheet and share it with the service account (Editor).
+
+### Tab: `dates` (owner-managed)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `date` | `YYYY-MM-DD` | Visit date (unique per row) |
+| `active` | `TRUE`/`FALSE` | Whether the date is bookable |
+| `ticket_limit` | number | Max tickets for this date |
+| `sold_count` | number | Tickets already sold |
+| `price_normal` | number | Normal ticket price (PLN) |
+| `price_reduced` | number | Reduced ticket price (PLN) |
+| `note` | text | Optional message shown for this date |
+| `max_tickets_per_order` | number | Max tickets per single order |
+
+**Row 1** must be the header row with these exact column names.
+
+### Tab: `orders` (app-written)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `order_id` | text | Internal order ID |
+| `created_at` | ISO datetime | Order creation time |
+| `visit_date` | `YYYY-MM-DD` | Selected visit date |
+| `email` | text | Customer email |
+| `normal_qty` | number | Normal tickets count |
+| `reduced_qty` | number | Reduced tickets count |
+| `total_amount` | number | Total price (PLN) |
+| `payment_status` | `pending` \| `paid` \| `failed` \| `cancelled` | Payment state |
+| `p24_session_id` | text | Przelewy24 session reference |
+| `ticket_ids` | text | Comma-separated ticket IDs (after payment) |
+
+**Row 1** must be the header row with these exact column names.
+
+## Section 2 – File reference
+
+| File | Purpose |
+|------|---------|
+| `lib/config/env.ts` | Zod-validated env loader; `server-only` |
+| `lib/sheets/schema.ts` | Tab names and column definitions |
+| `lib/sheets/client.ts` | JWT auth + singleton Sheets API client |
+| `lib/sheets/helpers.ts` | `readSheetRange`, `appendSheetRow`, row parsers |
+| `types/booking.ts` | `CheckoutPayload`, `PaymentStatus` |
+| `types/sheets.ts` | `DateRow`, `OrderRow` |
+| `lib/validation/checkout.ts` | Zod schema for checkout payload |
+| `lib/validation/payment.ts` | Zod schema for payment status values |
+
+## Local Development
+
+### Node.js
+
+```bash
+npm install
+cp .env.example .env.local
+# edit .env.local with your Google credentials
+npm run dev
+```
+
+### Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Set env vars via `.env.local` on the host (mount `./` into the container).
+
+## Out of scope (not yet implemented)
+
+- Payment / webhook logic
 - QR generation
-- email sending
-- booking business logic
-- analytics and advanced logging
+- Email sending
+- Booking API routes and UI flow
+- Analytics / statistics tabs
+- Advanced logging
 
-These will be added in later sections, step by step.
+## Commands
+
+```bash
+npm run dev
+npm run lint
+npm run build
+```
