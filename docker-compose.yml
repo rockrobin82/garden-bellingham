@@ -1,0 +1,20 @@
+services:
+  web:
+    container_name: ogrod-bellingham-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps
+    working_dir: /app
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    volumes:
+      - ./:/app
+      - ogrod_bellingham_node_modules:/app/node_modules
+
+volumes:
+  ogrod_bellingham_node_modules:
