@@ -98,13 +98,15 @@ export function parseDateRows(rows: string[][]): DateRow[] {
     );
   }
 
+  console.log("HEADERS:", headers);
+  console.log("ROWS:", dataRows);
+  
   return dataRows
-    .filter((row) => row.some((cell) => cell.trim() !== ""))
+    .filter((row) => row.some((cell) => String(cell).trim() !== ""))
     .map((row) => {
       const record = mapRowToRecord(headers, row);
-
-      console.log(record);
-
+      console.log("RECORD:", record);
+      
       return {
         date: record.date,
         active: parseBoolean(record.active),
