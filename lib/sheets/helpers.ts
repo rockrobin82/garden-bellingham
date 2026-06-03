@@ -103,6 +103,8 @@ export function parseDateRows(rows: string[][]): DateRow[] {
     .map((row) => {
       const record = mapRowToRecord(headers, row);
 
+      console.log(record);
+
       return {
         date: record.date,
         active: parseBoolean(record.active),
