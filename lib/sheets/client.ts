@@ -18,7 +18,7 @@ export function getGoogleSheetsClient(): sheets_v4.Sheets {
 
   const auth = new google.auth.JWT({
     email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: env.GOOGLE_PRIVATE_KEY,
+    key: env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 
