@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f8f3;
-  --foreground: #1f2d1f;
-  --surface: #ffffff;
-  --muted: #647067;
-  --primary: #2e5f3e;
-  --primary-foreground: #f7fff8;
-  --border: #dce7dc;
+  --background: #ffffff;
+  --foreground: #1f4d35;
+  --surface: #f6faf7;
+  --muted: #666666;
+  --primary: #1f4d35;
+  --primary-hover: #2a6b4a;
+  --primary-foreground: #ffffff;
+  --border: #d7e8dc;
+  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 @theme inline {
@@ -22,20 +24,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111a12;
-    --foreground: #e6efe4;
-    --surface: #162117;
-    --muted: #a6b4a7;
-    --primary: #66a37c;
-    --primary-foreground: #0d1510;
-    --border: #2d3b2f;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+.garden-section {
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--card-shadow);
+}
+
+.garden-btn {
+  border-radius: 12px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transition: background-color 0.2s ease;
+}
+
+.garden-btn:hover {
+  background: var(--primary-hover);
 }
