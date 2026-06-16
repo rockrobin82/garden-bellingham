@@ -1,143 +1,147 @@
-# Ogrod Bellingham - Ticket Booking MVP
+# 🌿 Ogród Bellingham
 
-Minimalist online ticket booking application for "Ogrod Bellingham".
+### Ticket Booking System powered by Google Sheets
 
-## Implemented sections
+A lightweight ticket reservation and availability management system built for Ogród Bellingham.
 
-- **Section 1**: project scaffold, Tailwind, ESLint, Docker, base UI
-- **Section 2**: environment validation, Google Sheets schema/types, Sheets client helpers
+The application uses Google Sheets as a simple administration panel, allowing non-technical users to manage available dates, ticket limits, and pricing without accessing the codebase.
 
-## Tech Stack
+---
 
-- Next.js 15 (App Router)
-- TypeScript (strict mode)
-- TailwindCSS v4
-- Zod (runtime validation)
-- Google Sheets API (`googleapis`)
-- Docker + Docker Compose
+## 📸 Screenshots
 
-## Project Structure
+### Booking Homepage
 
-```txt
-app/
-  (public)/          # booking UI (placeholder)
-  api/               # API routes (placeholders for later sections)
-lib/
-  config/env.ts      # strict env loader (server-only)
-  sheets/            # Google Sheets client + helpers
-  validation/        # zod schemas (checkout, payment status)
-types/
-  booking.ts         # CheckoutPayload, PaymentStatus
-  sheets.ts          # DateRow, OrderRow
+![Booking Homepage](Screenshots/dashboard1.png)
+
+---
+
+### Available Dates & Ticket Selection
+
+![Ticket Selection](Screenshots/dashboard2.png)
+
+---
+
+### Google Sheets Administration Panel
+
+![Google Sheets CMS](Screenshots/excel.png)
+
+---
+
+## ✨ Features
+
+### Visitor Features
+
+* Browse available event dates
+* View real-time ticket availability
+* Display standard and reduced ticket prices
+* Automatic sold-out detection
+* Mobile-friendly responsive interface
+* Dedicated booking subdomain
+
+### Administration Features
+
+* Manage events directly from Google Sheets
+* Update pricing without code changes
+* Control ticket limits per event
+* Enable or disable event dates
+* Add custom visitor notes
+* Configure maximum tickets per order
+
+---
+
+## 🛠️ Tech Stack
+
+* Next.js 15
+* React
+* TypeScript
+* Tailwind CSS
+* Google Sheets API
+* Google Service Account
+* Vercel
+
+---
+
+## 📊 Data Structure
+
+The application uses Google Sheets as its primary data source.
+
+Example fields:
+
+| Field                 | Description                    |
+| --------------------- | ------------------------------ |
+| date                  | Event date                     |
+| active                | Event visibility status        |
+| ticket_limit          | Maximum available tickets      |
+| sold_count            | Number of sold tickets         |
+| price_normal          | Standard ticket price          |
+| price_reduced         | Reduced ticket price           |
+| note                  | Additional visitor information |
+| max_tickets_per_order | Purchase limit per order       |
+
+---
+
+## 🔐 Environment Variables
+
+Required variables:
+
+```env
+NEXT_PUBLIC_APP_URL=
+GOOGLE_SERVICE_ACCOUNT_EMAIL=
+GOOGLE_PRIVATE_KEY=
+GOOGLE_SHEETS_SPREADSHEET_ID=
 ```
 
-## Environment Variables
+---
 
-Copy the example file and fill in values:
+## 🚀 Local Development
 
-```bash
-cp .env.example .env.local
-```
-
-### Required (Section 2)
-
-| Variable | Description |
-|----------|-------------|
-| `NEXT_PUBLIC_APP_URL` | Public app URL (e.g. `http://localhost:3000`) |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Google service account email |
-| `GOOGLE_PRIVATE_KEY` | Service account private key (use `\n` for newlines) |
-| `GOOGLE_SHEETS_SPREADSHEET_ID` | Spreadsheet ID from the sheet URL |
-
-### Optional (future sections)
-
-| Variable | Used in |
-|----------|---------|
-| `P24_*` | Przelewy24 payments |
-| `RESEND_API_KEY`, `MAIL_FROM` | Ticket email delivery |
-
-Validation runs lazily via `getEnv()` in `lib/config/env.ts` when server code first needs configuration. This keeps `next build` working without secrets until API routes call server modules.
-
-## Google Sheets Schema (MVP)
-
-Create one spreadsheet and share it with the service account (Editor).
-
-### Tab: `dates` (owner-managed)
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `date` | `YYYY-MM-DD` | Visit date (unique per row) |
-| `active` | `TRUE`/`FALSE` | Whether the date is bookable |
-| `ticket_limit` | number | Max tickets for this date |
-| `sold_count` | number | Tickets already sold |
-| `price_normal` | number | Normal ticket price (PLN) |
-| `price_reduced` | number | Reduced ticket price (PLN) |
-| `note` | text | Optional message shown for this date |
-| `max_tickets_per_order` | number | Max tickets per single order |
-
-**Row 1** must be the header row with these exact column names.
-
-### Tab: `orders` (app-written)
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `order_id` | text | Internal order ID |
-| `created_at` | ISO datetime | Order creation time |
-| `visit_date` | `YYYY-MM-DD` | Selected visit date |
-| `email` | text | Customer email |
-| `normal_qty` | number | Normal tickets count |
-| `reduced_qty` | number | Reduced tickets count |
-| `total_amount` | number | Total price (PLN) |
-| `payment_status` | `pending` \| `paid` \| `failed` \| `cancelled` | Payment state |
-| `p24_session_id` | text | Przelewy24 session reference |
-| `ticket_ids` | text | Comma-separated ticket IDs (after payment) |
-
-**Row 1** must be the header row with these exact column names.
-
-## Section 2 – File reference
-
-| File | Purpose |
-|------|---------|
-| `lib/config/env.ts` | Zod-validated env loader; `server-only` |
-| `lib/sheets/schema.ts` | Tab names and column definitions |
-| `lib/sheets/client.ts` | JWT auth + singleton Sheets API client |
-| `lib/sheets/helpers.ts` | `readSheetRange`, `appendSheetRow`, row parsers |
-| `types/booking.ts` | `CheckoutPayload`, `PaymentStatus` |
-| `types/sheets.ts` | `DateRow`, `OrderRow` |
-| `lib/validation/checkout.ts` | Zod schema for checkout payload |
-| `lib/validation/payment.ts` | Zod schema for payment status values |
-
-## Local Development
-
-### Node.js
+Install dependencies:
 
 ```bash
 npm install
-cp .env.example .env.local
-# edit .env.local with your Google credentials
-npm run dev
 ```
 
-### Docker Compose
-
-```bash
-docker compose up --build
-```
-
-Set env vars via `.env.local` on the host (mount `./` into the container).
-
-## Out of scope (not yet implemented)
-
-- Payment / webhook logic
-- QR generation
-- Email sending
-- Booking API routes and UI flow
-- Analytics / statistics tabs
-- Advanced logging
-
-## Commands
+Start development server:
 
 ```bash
 npm run dev
-npm run lint
+```
+
+Build for production:
+
+```bash
 npm run build
 ```
+
+---
+
+## 🌐 Deployment
+
+Hosted on:
+
+* Vercel
+* Google Sheets API
+
+Production URL:
+
+```text
+https://bilety.katarzynabellingham.pl
+```
+
+---
+
+## 🎯 Project Goal
+
+The goal of this project was to create a simple, maintainable, and cost-effective ticket reservation system without relying on complex third-party booking platforms.
+
+Google Sheets serves as a lightweight CMS, allowing administrators to manage dates, availability, and pricing through a familiar spreadsheet interface.
+
+---
+
+## 👨‍💻 Author
+
+**Michał Polaszczyk**
+
+GitHub:
+https://github.com/rockrobin82
