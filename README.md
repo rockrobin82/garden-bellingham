@@ -12,19 +12,19 @@ The application uses Google Sheets as a simple administration panel, allowing no
 
 ### Booking Homepage
 
-![Booking Homepage](Screenshots/dashboard1.png)
+![Booking Homepage](screenshots/dashboard1.png)
 
 ---
 
 ### Available Dates & Ticket Selection
 
-![Ticket Selection](Screenshots/dashboard2.png)
+![Ticket Selection](screenshots/dashboard2.png)
 
 ---
 
 ### Google Sheets Administration Panel
 
-![Google Sheets CMS](Screenshots/excel.png)
+![Google Sheets CMS](screenshots/excel.png)
 
 ---
 
