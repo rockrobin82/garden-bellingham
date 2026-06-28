@@ -1,6 +1,8 @@
 import { LegalHeader } from "@/components/legal/LegalHeader";
 import { LegalSection } from "@/components/legal/LegalSection";
 
+const bookingUrl = "https://bilety.katarzynabellingham.pl";
+
 type LegalLayoutProps = {
   eyebrow: string;
   title: string;
@@ -29,6 +31,12 @@ export function LegalLayout({
               placeholder={`${placeholderPrefix}: ${section}. Treść zostanie dodana później.`}
             />
           ))}
+        </div>
+
+        <div className="flex justify-center">
+          <a href={bookingUrl} className="garden-btn px-5 py-3 text-sm font-medium">
+            ← Wróć do rezerwacji biletów
+          </a>
         </div>
       </div>
     </main>
