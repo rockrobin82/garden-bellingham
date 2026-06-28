@@ -1,4 +1,24 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/legal/LegalLayout";
+
+const title = "Kontakt | Ogród Bellingham Bilety";
+const description =
+  "Kontakt i informacje wsparcia dla aplikacji do rezerwacji biletów Ogród Bellingham.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: "/kontakt",
+  },
+  openGraph: {
+    title,
+    description,
+    url: "/kontakt",
+    siteName: "Ogród Bellingham Bilety",
+    type: "website",
+  },
+};
 
 const sections = [
   "Seller Information",

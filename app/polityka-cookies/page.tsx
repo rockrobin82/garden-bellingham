@@ -1,4 +1,24 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/legal/LegalLayout";
+
+const title = "Polityka cookies | Ogród Bellingham Bilety";
+const description =
+  "Polityka cookies aplikacji do rezerwacji biletów Ogród Bellingham.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: "/polityka-cookies",
+  },
+  openGraph: {
+    title,
+    description,
+    url: "/polityka-cookies",
+    siteName: "Ogród Bellingham Bilety",
+    type: "article",
+  },
+};
 
 const sections = [
   "What are cookies",

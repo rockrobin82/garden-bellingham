@@ -1,4 +1,24 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/legal/LegalLayout";
+
+const title = "Regulamin | Ogród Bellingham Bilety";
+const description =
+  "Regulamin aplikacji do rezerwacji biletów Ogród Bellingham.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: "/regulamin",
+  },
+  openGraph: {
+    title,
+    description,
+    url: "/regulamin",
+    siteName: "Ogród Bellingham Bilety",
+    type: "article",
+  },
+};
 
 const sections = [
   "Seller Information",
