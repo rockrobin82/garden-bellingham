@@ -215,6 +215,16 @@ export function AvailabilityCalendar() {
           </label>
         </div>
 
+        <div className="mt-5 rounded-xl border border-border bg-[#f6faf7] p-4">
+          <p className="font-medium text-[#1f4d35]">Masz pytania?</p>
+          <a
+            href="/kontakt"
+            className="mt-1 inline-flex text-sm font-medium text-[#1f4d35] underline-offset-4 hover:underline"
+          >
+            Skontaktuj się z nami →
+          </a>
+        </div>
+
         {validationMessage ? (
           <p className="mt-4 text-sm text-red-600" role="alert">
             {validationMessage}
