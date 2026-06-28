@@ -30,6 +30,9 @@ function formatPrice(value: number): string {
 export function AvailabilityCalendar() {
   const [state, setState] = useState<LoadState>("loading");
   const [dates, setDates] = useState<AvailabilityDate[]>([]);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -64,6 +67,19 @@ export function AvailabilityCalendar() {
       mounted = false;
     };
   }, []);
+
+  const canProceedToPayment = acceptedTerms && acceptedPrivacy;
+
+  function handlePaymentAttempt() {
+    if (canProceedToPayment) {
+      setValidationMessage("");
+      return;
+    }
+
+    setValidationMessage(
+      "Przed przejściem do płatności zaakceptuj regulamin oraz politykę prywatności.",
+    );
+  }
 
   if (state === "loading") {
     return (
@@ -143,6 +159,78 @@ export function AvailabilityCalendar() {
           ))}
         </div>
       )}
+
+      <div className="mt-8 rounded-2xl border border-border bg-white p-5">
+        <h4 className="text-lg font-semibold text-[#1f4d35]">Zgody wymagane do płatności</h4>
+
+        <div className="mt-4 space-y-4">
+          <label className="flex gap-3 text-sm leading-6 text-[#666]">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => {
+                setAcceptedTerms(event.target.checked);
+                setValidationMessage("");
+              }}
+              className="mt-1 h-4 w-4 rounded border-border accent-[#1f4d35]"
+              required
+            />
+            <span>
+              Zapoznałem(-am) się z{" "}
+              <a
+                href="/regulamin"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-[#1f4d35] underline-offset-4 hover:underline"
+              >
+                Regulaminem
+              </a>
+              .
+            </span>
+          </label>
+
+          <label className="flex gap-3 text-sm leading-6 text-[#666]">
+            <input
+              type="checkbox"
+              checked={acceptedPrivacy}
+              onChange={(event) => {
+                setAcceptedPrivacy(event.target.checked);
+                setValidationMessage("");
+              }}
+              className="mt-1 h-4 w-4 rounded border-border accent-[#1f4d35]"
+              required
+            />
+            <span>
+              Zapoznałem(-am) się z{" "}
+              <a
+                href="/polityka-prywatnosci"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-[#1f4d35] underline-offset-4 hover:underline"
+              >
+                Polityką prywatności
+              </a>
+              .
+            </span>
+          </label>
+        </div>
+
+        {validationMessage ? (
+          <p className="mt-4 text-sm text-red-600" role="alert">
+            {validationMessage}
+          </p>
+        ) : null}
+
+        <div className="mt-5" onClick={handlePaymentAttempt}>
+          <button
+            type="button"
+            disabled={!canProceedToPayment}
+            className="garden-btn w-full px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 disabled:pointer-events-none sm:w-auto"
+          >
+            Przejdź do płatności
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
