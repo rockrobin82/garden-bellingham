@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type AvailabilityDate = {
   date: string;
@@ -30,9 +30,14 @@ function formatPrice(value: number): string {
 export function AvailabilityCalendar() {
   const [state, setState] = useState<LoadState>("loading");
   const [dates, setDates] = useState<AvailabilityDate[]>([]);
+  const [selectedDate, setSelectedDate] = useState<AvailabilityDate | null>(null);
+  const [selectedDateKey, setSelectedDateKey] = useState("");
+  const [normalQty, setNormalQty] = useState(0);
+  const [reducedQty, setReducedQty] = useState(0);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
+  const summaryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -68,7 +73,44 @@ export function AvailabilityCalendar() {
     };
   }, []);
 
-  const canProceedToPayment = acceptedTerms && acceptedPrivacy;
+  const selectedTickets = normalQty + reducedQty;
+  const totalPrice =
+    selectedDate === null
+      ? 0
+      : normalQty * selectedDate.priceNormal + reducedQty * selectedDate.priceReduced;
+  const maxTicketsForSelection = selectedDate?.maxTicketsPerOrder ?? 0;
+  const canAddTicket = selectedDate !== null && selectedTickets < maxTicketsForSelection;
+  const canProceedToPayment = selectedTickets > 0 && acceptedTerms && acceptedPrivacy;
+
+  function selectDate(date: AvailabilityDate, key: string) {
+    if (!date.active) {
+      return;
+    }
+
+    setSelectedDate(date);
+    setSelectedDateKey(key);
+    setNormalQty(0);
+    setReducedQty(0);
+    setValidationMessage("");
+    window.setTimeout(() => {
+      summaryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  }
+
+  function updateTicketCount(type: "normal" | "reduced", direction: "increase" | "decrease") {
+    const update = type === "normal" ? setNormalQty : setReducedQty;
+
+    if (direction === "decrease") {
+      update((current) => Math.max(0, current - 1));
+      setValidationMessage("");
+      return;
+    }
+
+    if (canAddTicket) {
+      update((current) => current + 1);
+      setValidationMessage("");
+    }
+  }
 
   function handlePaymentAttempt() {
     if (canProceedToPayment) {
@@ -76,9 +118,12 @@ export function AvailabilityCalendar() {
       return;
     }
 
-    setValidationMessage(
-      "Przed przejściem do płatności zaakceptuj regulamin oraz politykę prywatności.",
-    );
+    if (selectedTickets === 0) {
+      setValidationMessage("Wybierz co najmniej jeden bilet, aby przejść dalej.");
+      return;
+    }
+
+    setValidationMessage("Przed przejściem do płatności zaakceptuj regulamin oraz politykę prywatności.");
   }
 
   if (state === "loading") {
@@ -114,16 +159,25 @@ export function AvailabilityCalendar() {
         <p className="text-sm text-[#666]">Brak terminów do wyświetlenia.</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {dates.map((item, index) => (
-            <article
-              key={`${item.date}-${index}`}
+          {dates.map((item, index) => {
+            const itemKey = `${item.date}-${index}`;
+            const isSelected = selectedDateKey === itemKey;
+
+            return (
+            <button
+              type="button"
+              key={itemKey}
+              disabled={!item.active}
+              aria-pressed={isSelected}
+              onClick={() => selectDate(item, itemKey)}
               className={[
-                "rounded-2xl border bg-white p-5 transition duration-200",
+                "rounded-2xl border p-5 text-left transition duration-200",
                 item.soldOut
                   ? "border-red-200 opacity-80"
                   : item.active
                     ? "border-[#d7e8dc] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
                     : "border-[#d7e8dc] opacity-70",
+                isSelected ? "border-[#1f4d35] bg-[#f6faf7]" : "bg-white",
               ].join(" ")}
             >
               <div className="flex items-start justify-between gap-3">
@@ -131,14 +185,16 @@ export function AvailabilityCalendar() {
                 <span
                   className={[
                     "rounded-full px-2.5 py-1 text-xs font-medium",
-                    item.soldOut
+                    isSelected
+                      ? "bg-[#1f4d35] text-white"
+                      : item.soldOut
                       ? "bg-red-50 text-red-700"
                       : item.active
                         ? "bg-[#e8f3ec] text-[#1f4d35]"
                         : "bg-gray-100 text-[#666]",
                   ].join(" ")}
                 >
-                  {item.soldOut ? "Wyprzedane" : item.active ? "Dostępne" : "Nieaktywne"}
+                  {isSelected ? "Wybrano" : item.soldOut ? "Wyprzedane" : item.active ? "Dostępne" : "Nieaktywne"}
                 </span>
               </div>
 
@@ -155,12 +211,95 @@ export function AvailabilityCalendar() {
                   {item.note}
                 </p>
               ) : null}
-            </article>
-          ))}
+            </button>
+            );
+          })}
         </div>
       )}
 
-      <div className="mt-8 rounded-2xl border border-border bg-white p-5">
+      <div ref={summaryRef} className="mt-8 rounded-2xl border border-border bg-white p-5 scroll-mt-6">
+        <h4 className="text-lg font-semibold text-[#1f4d35]">Twój wybór</h4>
+
+        {selectedDate ? (
+          <div className="mt-4 space-y-5">
+            <div className="rounded-xl border border-border bg-[#f6faf7] p-4">
+              <p className="text-sm text-[#666]">Wybrany termin</p>
+              <p className="mt-1 font-medium text-[#1f4d35]">{selectedDate.date}</p>
+              <p className="mt-1 text-sm text-[#666]">
+                Maksymalnie {selectedDate.maxTicketsPerOrder} bilet(y) w zamówieniu.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-border p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-[#1f4d35]">Normalny</p>
+                    <p className="text-sm text-[#666]">{formatPrice(selectedDate.priceNormal)}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => updateTicketCount("normal", "decrease")}
+                      disabled={normalQty === 0}
+                      className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      -
+                    </button>
+                    <span className="min-w-6 text-center font-medium">{normalQty}</span>
+                    <button
+                      type="button"
+                      onClick={() => updateTicketCount("normal", "increase")}
+                      disabled={!canAddTicket}
+                      className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-[#1f4d35]">Ulgowy</p>
+                    <p className="text-sm text-[#666]">{formatPrice(selectedDate.priceReduced)}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => updateTicketCount("reduced", "decrease")}
+                      disabled={reducedQty === 0}
+                      className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      -
+                    </button>
+                    <span className="min-w-6 text-center font-medium">{reducedQty}</span>
+                    <button
+                      type="button"
+                      onClick={() => updateTicketCount("reduced", "increase")}
+                      disabled={!canAddTicket}
+                      className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-border pt-4">
+              <p className="font-medium text-[#1f4d35]">Razem</p>
+              <p className="text-xl font-semibold text-[#1f4d35]">{formatPrice(totalPrice)}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-[#666]">
+            Wybierz aktywny termin z listy, aby skonfigurować bilety.
+          </p>
+        )}
+
+        <div className="mt-8 border-t border-border pt-5">
         <h4 className="text-lg font-semibold text-[#1f4d35]">Zgody wymagane do płatności</h4>
 
         <div className="mt-4 space-y-4">
@@ -237,9 +376,10 @@ export function AvailabilityCalendar() {
             disabled={!canProceedToPayment}
             className="garden-btn w-full px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 disabled:pointer-events-none sm:w-auto"
           >
-            Przejdź do płatności
+            Przejdź do płatności • {formatPrice(totalPrice)}
           </button>
         </div>
+      </div>
       </div>
     </section>
   );
