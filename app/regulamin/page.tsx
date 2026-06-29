@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalLayout } from "@/components/legal/LegalLayout";
+import { LegalSection } from "@/components/legal/LegalSection";
 
 const title = "Regulamin | Ogród Bellingham Bilety";
 const description =
@@ -45,6 +46,14 @@ export default function TermsPage() {
       description="Struktura regulaminu aplikacji biletowej. Treść prawna zostanie dodana później."
       sections={sections}
       placeholderPrefix="TODO: Regulamin"
-    />
+    >
+      {sections.map((section) => (
+        <LegalSection key={section} title={section}>
+          <p className="mt-3 text-sm leading-6 text-[#666]">
+            TODO: Regulamin: {section}. Treść zostanie dodana później.
+          </p>
+        </LegalSection>
+      ))}
+    </LegalLayout>
   );
 }

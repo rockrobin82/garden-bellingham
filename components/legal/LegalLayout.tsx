@@ -9,6 +9,7 @@ type LegalLayoutProps = {
   description: string;
   sections: readonly string[];
   placeholderPrefix: string;
+  children?: React.ReactNode;
 };
 
 export function LegalLayout({
@@ -17,6 +18,7 @@ export function LegalLayout({
   description,
   sections,
   placeholderPrefix,
+  children,
 }: LegalLayoutProps) {
   return (
     <main className="bg-white px-6 py-10 text-[#1f4d35] sm:px-10 sm:py-14">
@@ -24,13 +26,14 @@ export function LegalLayout({
         <LegalHeader eyebrow={eyebrow} title={title} description={description} />
 
         <div className="garden-section space-y-4 p-5 sm:p-8">
-          {sections.map((section) => (
-            <LegalSection
-              key={section}
-              title={section}
-              placeholder={`${placeholderPrefix}: ${section}. Treść zostanie dodana później.`}
-            />
-          ))}
+          {children ??
+            sections.map((section) => (
+              <LegalSection key={section} title={section}>
+                <p className="mt-3 text-sm leading-6 text-[#666]">
+                  {`${placeholderPrefix}: ${section}. Treść zostanie dodana później.`}
+                </p>
+              </LegalSection>
+            ))}
         </div>
 
         <div className="flex justify-center">
