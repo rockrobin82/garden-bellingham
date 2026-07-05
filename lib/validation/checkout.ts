@@ -8,12 +8,11 @@ export const checkoutPayloadSchema = z
   .object({
     visitDate: z.string().regex(isoDateRegex, "visitDate must be YYYY-MM-DD"),
     email: z.string().email(),
-    normalQty: z.number().int().min(0),
-    reducedQty: z.number().int().min(0),
+    ticketQty: z.number().int().min(0),
   })
-  .refine((data) => data.normalQty + data.reducedQty > 0, {
+  .refine((data) => data.ticketQty > 0, {
     message: "At least one ticket is required",
-    path: ["normalQty"],
+    path: ["ticketQty"],
   });
 
 export function parseCheckoutPayload(input: unknown): CheckoutPayload {

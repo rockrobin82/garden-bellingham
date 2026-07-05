@@ -32,8 +32,7 @@ export function AvailabilityCalendar() {
   const [dates, setDates] = useState<AvailabilityDate[]>([]);
   const [selectedDate, setSelectedDate] = useState<AvailabilityDate | null>(null);
   const [selectedDateKey, setSelectedDateKey] = useState("");
-  const [normalQty, setNormalQty] = useState(0);
-  const [reducedQty, setReducedQty] = useState(0);
+  const [ticketQty, setTicketQty] = useState(0);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
@@ -73,11 +72,8 @@ export function AvailabilityCalendar() {
     };
   }, []);
 
-  const selectedTickets = normalQty + reducedQty;
-  const totalPrice =
-    selectedDate === null
-      ? 0
-      : normalQty * selectedDate.priceNormal + reducedQty * selectedDate.priceReduced;
+  const selectedTickets = ticketQty;
+  const totalPrice = selectedDate === null ? 0 : ticketQty * selectedDate.priceNormal;
   const maxTicketsForSelection = selectedDate?.maxTicketsPerOrder ?? 0;
   const canAddTicket = selectedDate !== null && selectedTickets < maxTicketsForSelection;
   const canProceedToPayment = selectedTickets > 0 && acceptedTerms && acceptedPrivacy;
@@ -89,25 +85,22 @@ export function AvailabilityCalendar() {
 
     setSelectedDate(date);
     setSelectedDateKey(key);
-    setNormalQty(0);
-    setReducedQty(0);
+    setTicketQty(0);
     setValidationMessage("");
     window.setTimeout(() => {
       summaryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 0);
   }
 
-  function updateTicketCount(type: "normal" | "reduced", direction: "increase" | "decrease") {
-    const update = type === "normal" ? setNormalQty : setReducedQty;
-
+  function updateTicketCount(direction: "increase" | "decrease") {
     if (direction === "decrease") {
-      update((current) => Math.max(0, current - 1));
+      setTicketQty((current) => Math.max(0, current - 1));
       setValidationMessage("");
       return;
     }
 
     if (canAddTicket) {
-      update((current) => current + 1);
+      setTicketQty((current) => current + 1);
       setValidationMessage("");
     }
   }
@@ -200,10 +193,7 @@ export function AvailabilityCalendar() {
 
               <p className="mt-3 text-sm text-[#666]">Pozostało: {item.remaining}</p>
               <p className="text-sm text-[#666]">
-                Normalny: {formatPrice(item.priceNormal)}
-              </p>
-              <p className="text-sm text-[#666]">
-                Ulgowy: {formatPrice(item.priceReduced)}
+                Bilet: {formatPrice(item.priceNormal)}
               </p>
 
               {item.note ? (
@@ -225,59 +215,28 @@ export function AvailabilityCalendar() {
             <div className="rounded-xl border border-border bg-[#f6faf7] p-4">
               <p className="text-sm text-[#666]">Wybrany termin</p>
               <p className="mt-1 font-medium text-[#1f4d35]">{selectedDate.date}</p>
-              <p className="mt-1 text-sm text-[#666]">
-                Maksymalnie {selectedDate.maxTicketsPerOrder} bilet(y) w zamówieniu.
-              </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3">
               <div className="rounded-xl border border-border p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-[#1f4d35]">Normalny</p>
+                    <p className="font-medium text-[#1f4d35]">Bilet</p>
                     <p className="text-sm text-[#666]">{formatPrice(selectedDate.priceNormal)}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => updateTicketCount("normal", "decrease")}
-                      disabled={normalQty === 0}
+                      onClick={() => updateTicketCount("decrease")}
+                      disabled={ticketQty === 0}
                       className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       -
                     </button>
-                    <span className="min-w-6 text-center font-medium">{normalQty}</span>
+                    <span className="min-w-6 text-center font-medium">{ticketQty}</span>
                     <button
                       type="button"
-                      onClick={() => updateTicketCount("normal", "increase")}
-                      disabled={!canAddTicket}
-                      className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-[#1f4d35]">Ulgowy</p>
-                    <p className="text-sm text-[#666]">{formatPrice(selectedDate.priceReduced)}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => updateTicketCount("reduced", "decrease")}
-                      disabled={reducedQty === 0}
-                      className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      -
-                    </button>
-                    <span className="min-w-6 text-center font-medium">{reducedQty}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateTicketCount("reduced", "increase")}
+                      onClick={() => updateTicketCount("increase")}
                       disabled={!canAddTicket}
                       className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
                     >
@@ -288,9 +247,19 @@ export function AvailabilityCalendar() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-border pt-4">
-              <p className="font-medium text-[#1f4d35]">Razem</p>
-              <p className="text-xl font-semibold text-[#1f4d35]">{formatPrice(totalPrice)}</p>
+            <div className="space-y-3 border-t border-border pt-4">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-[#666]">Cena biletu</p>
+                <p className="font-medium text-[#1f4d35]">{formatPrice(selectedDate.priceNormal)}</p>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-[#666]">Liczba biletów</p>
+                <p className="font-medium text-[#1f4d35]">{ticketQty}</p>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <p className="font-medium text-[#1f4d35]">Łączna kwota</p>
+                <p className="text-xl font-semibold text-[#1f4d35]">{formatPrice(totalPrice)}</p>
+              </div>
             </div>
           </div>
         ) : (
