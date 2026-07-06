@@ -1,9 +1,20 @@
 import type { ReactNode } from "react";
 import { AvailabilityCalendar } from "@/components/booking/AvailabilityCalendar";
 
-function IconBadge({ children }: { children: ReactNode }) {
+function IconBadge({
+  children,
+  compact = false,
+}: {
+  children: ReactNode;
+  compact?: boolean;
+}) {
   return (
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-[#f6faf7] text-[#1f4d35]">
+    <span
+      className={[
+        "flex shrink-0 items-center justify-center rounded-full border border-border bg-[#f6faf7] text-[#1f4d35]",
+        compact ? "h-8 w-8" : "h-11 w-11",
+      ].join(" ")}
+    >
       <svg
         aria-hidden="true"
         viewBox="0 0 24 24"
@@ -12,7 +23,7 @@ function IconBadge({ children }: { children: ReactNode }) {
         strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="h-5 w-5"
+        className={compact ? "h-[18px] w-[18px]" : "h-5 w-5"}
       >
         {children}
       </svg>
@@ -20,18 +31,18 @@ function IconBadge({ children }: { children: ReactNode }) {
   );
 }
 
-function LeafIcon() {
+function LeafIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <path d="M5 19c8 0 14-6 14-14C11 5 5 11 5 19Z" />
       <path d="M5 19c3-5 7-8 14-14" />
     </IconBadge>
   );
 }
 
-function CalendarIcon() {
+function CalendarIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <path d="M7 3v3" />
       <path d="M17 3v3" />
       <path d="M4 8h16" />
@@ -40,45 +51,45 @@ function CalendarIcon() {
   );
 }
 
-function ClockIcon() {
+function ClockIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <circle cx="12" cy="12" r="8" />
       <path d="M12 8v5l3 2" />
     </IconBadge>
   );
 }
 
-function FootstepsIcon() {
+function FootstepsIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <path d="M6.5 14.5c-1.5 1-2 2.4-1.2 3.5.8 1.2 2.6 1.1 4.1-.1 1.4-1.1 1.8-2.8.9-3.8-.8-1-2.3-.7-3.8.4Z" />
       <path d="M14.7 6.1c-1.4 1-1.9 2.6-1.1 3.6.8 1.1 2.5.9 3.9-.2 1.3-1.1 1.7-2.7.9-3.7-.8-.9-2.3-.7-3.7.3Z" />
     </IconBadge>
   );
 }
 
-function UserIcon() {
+function UserIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <circle cx="12" cy="7" r="3" />
       <path d="M5 21a7 7 0 0 1 14 0" />
     </IconBadge>
   );
 }
 
-function BookIcon() {
+function BookIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z" />
       <path d="M8 7h8" />
     </IconBadge>
   );
 }
 
-function SproutIcon() {
+function SproutIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <path d="M12 20v-8" />
       <path d="M12 12c-5 0-7-3-7-7 5 0 7 3 7 7Z" />
       <path d="M12 12c5 0 7-3 7-7-5 0-7 3-7 7Z" />
@@ -87,9 +98,9 @@ function SproutIcon() {
   );
 }
 
-function CoffeeIcon() {
+function CoffeeIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <path d="M6 8h10v5a5 5 0 0 1-10 0V8Z" />
       <path d="M16 9h1a3 3 0 0 1 0 6h-1" />
       <path d="M8 3v2" />
@@ -99,9 +110,9 @@ function CoffeeIcon() {
   );
 }
 
-function CarIcon() {
+function CarIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <path d="m5 12 2-5h10l2 5" />
       <path d="M5 12h14v5H5z" />
       <circle cx="8" cy="17" r="1.5" />
@@ -110,9 +121,9 @@ function CarIcon() {
   );
 }
 
-function ToiletIcon() {
+function ToiletIcon({ compact = false }: { compact?: boolean }) {
   return (
-    <IconBadge>
+    <IconBadge compact={compact}>
       <path d="M8 4h8v6a4 4 0 0 1-8 0V4Z" />
       <path d="M7 20h10" />
       <path d="M12 14v6" />
@@ -132,18 +143,20 @@ function AlertIcon() {
 
 function InfoRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex gap-4 border-b border-border py-4 last:border-b-0">
+    <div className="flex items-center gap-2.5 border-b border-border py-2.5 last:border-b-0">
       {icon}
-      <div className="min-w-0 text-sm leading-6 text-[#666]">{children}</div>
+      <div className="min-w-0 text-sm font-semibold leading-5 text-[#1f4d35]">
+        {children}
+      </div>
     </div>
   );
 }
 
-function FeatureCard({ icon, title }: { icon: ReactNode; title: string }) {
+function FeatureItem({ icon, title }: { icon: ReactNode; title: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-white p-4">
+    <div className="flex items-center gap-2.5 text-sm font-semibold leading-5 text-[#1f4d35]">
       {icon}
-      <p className="mt-4 text-sm font-semibold text-[#1f4d35]">{title}</p>
+      <span>{title}</span>
     </div>
   );
 }
@@ -189,24 +202,21 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mt-8">
-              <InfoRow icon={<CalendarIcon />}>
-                <p className="font-semibold text-[#1f4d35]">Co drugi piątek miesiąca</p>
+            <div className="mt-6">
+              <InfoRow icon={<CalendarIcon compact />}>
+                <p>Co drugi piątek miesiąca</p>
               </InfoRow>
-              <InfoRow icon={<ClockIcon />}>
-                <p className="font-semibold text-[#1f4d35]">11:00–15:00</p>
+              <InfoRow icon={<ClockIcon compact />}>
+                <p>11:00–15:00</p>
               </InfoRow>
-              <InfoRow icon={<FootstepsIcon />}>
-                <p className="font-semibold text-[#1f4d35]">12:00–14:00</p>
-                <p>Oprowadzanie po ogrodzie połączone z czasem na pytania.</p>
+              <InfoRow icon={<FootstepsIcon compact />}>
+                <p>Oprowadzanie po ogrodzie (12:00–14:00)</p>
               </InfoRow>
-              <InfoRow icon={<UserIcon />}>
-                <p className="font-semibold text-[#1f4d35]">
-                  Spotkanie z Katarzyną Bellingham lub Jackiem Naliwajkiem
-                </p>
+              <InfoRow icon={<UserIcon compact />}>
+                <p>Spotkanie z Katarzyną Bellingham lub Jackiem Naliwajkiem</p>
               </InfoRow>
-              <InfoRow icon={<BookIcon />}>
-                <p className="font-semibold text-[#1f4d35]">Możliwość podpisania książek</p>
+              <InfoRow icon={<BookIcon compact />}>
+                <p>Możliwość podpisania książek</p>
               </InfoRow>
             </div>
 
@@ -218,7 +228,7 @@ export default function HomePage() {
                     Ważna informacja
                   </p>
                 </div>
-                <div className="mt-4 space-y-2 text-sm leading-6 text-[#666]">
+                <div className="mt-3 space-y-1.5 text-sm leading-5 text-[#666]">
                   <p>Piątkowe spotkania mają kameralny charakter.</p>
                   <p>Liczba miejsc jest ściśle ograniczona.</p>
                   <p className="font-semibold text-[#1f4d35]">
@@ -237,28 +247,23 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="mt-8">
-              <InfoRow icon={<CalendarIcon />}>
-                <p className="font-semibold text-[#1f4d35]">Sobota i niedziela</p>
+            <div className="mt-6">
+              <InfoRow icon={<CalendarIcon compact />}>
+                <p>Sobota i niedziela</p>
               </InfoRow>
-              <InfoRow icon={<ClockIcon />}>
-                <p className="font-semibold text-[#1f4d35]">11:00–16:00</p>
+              <InfoRow icon={<ClockIcon compact />}>
+                <p>11:00–16:00</p>
               </InfoRow>
-              <InfoRow icon={<LeafIcon />}>
-                <p>
-                  Do Państwa dyspozycji udostępniamy{" "}
-                  <span className="font-semibold text-[#1f4d35]">
-                    ogród dolny oraz ogród górny.
-                  </span>
-                </p>
+              <InfoRow icon={<LeafIcon compact />}>
+                <p>Ogród dolny oraz ogród górny</p>
               </InfoRow>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <FeatureCard icon={<SproutIcon />} title="Szkółka roślin" />
-              <FeatureCard icon={<CoffeeIcon />} title="Kawiarenka" />
-              <FeatureCard icon={<CarIcon />} title="Darmowy parking" />
-              <FeatureCard icon={<ToiletIcon />} title="Toalety" />
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+              <FeatureItem icon={<SproutIcon compact />} title="Szkółka roślin" />
+              <FeatureItem icon={<CoffeeIcon compact />} title="Kawiarenka" />
+              <FeatureItem icon={<CarIcon compact />} title="Darmowy parking" />
+              <FeatureItem icon={<ToiletIcon compact />} title="Toalety" />
             </div>
 
             <div className="mt-auto pt-6">
@@ -269,7 +274,7 @@ export default function HomePage() {
                     Informacja praktyczna
                   </p>
                 </div>
-                <div className="mt-4 space-y-2 text-sm leading-6 text-[#666]">
+                <div className="mt-3 space-y-1.5 text-sm leading-5 text-[#666]">
                   <p>Na weekendowe zwiedzanie obowiązują bilety wstępu.</p>
                   <p>
                     Ze względu na ograniczoną liczbę odwiedzających zalecamy
