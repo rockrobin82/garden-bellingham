@@ -80,6 +80,31 @@ export default function ContactPage() {
         </p>
       </LegalSection>
 
+      <LegalSection title="Telefon">
+        <div className="mt-3 text-sm leading-6 text-[#666]">
+          <p>
+            <strong>
+              <a
+                href="tel:+48607719608"
+                className="text-[#1f4d35] underline-offset-4 hover:underline"
+              >
+                +48 607 719 608
+              </a>
+            </strong>
+          </p>
+          <p className="mt-4">
+            Telefon służy do kontaktu w sprawach związanych z funkcjonowaniem Ogrodu.
+          </p>
+          <p className="mt-4">
+            W sprawach dotyczących zakupu biletów, płatności, faktur oraz reklamacji
+            preferujemy kontakt drogą e-mail pod adresem:
+          </p>
+          <p className="mt-3">
+            <strong>biuro@angielskieogrody.com</strong>
+          </p>
+        </div>
+      </LegalSection>
+
       <LegalSection title="Kontakt e-mail">
         <div className="mt-3 text-sm leading-6 text-[#666]">
           <p>

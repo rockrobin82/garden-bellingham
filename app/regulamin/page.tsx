@@ -182,10 +182,19 @@ export default function TermsPage() {
       <LegalSection title="§5. Dostarczenie biletu">
         <ol className="mt-3 list-decimal space-y-4 pl-5 text-sm leading-6 text-[#666]">
           <li>Bilet dostarczany jest wyłącznie w formie elektronicznej.</li>
+          <li>
+            Bilet elektroniczny zostanie przesłany na adres e-mail podany podczas
+            składania zamówienia nie później niż w ciągu 24 godzin od otrzymania
+            potwierdzenia dokonania płatności.
+          </li>
+          <li>
+            W większości przypadków bilet dostarczany jest w ciągu kilku minut od
+            zaksięgowania płatności.
+          </li>
           <li>Kupujący zobowiązany jest do podania prawidłowego adresu e-mail.</li>
           <li>
-            W przypadku nieotrzymania biletu Kupujący powinien sprawdzić folder SPAM,
-            a następnie skontaktować się ze Sprzedawcą.
+            W przypadku nieotrzymania biletu Kupujący powinien sprawdzić folder SPAM
+            lub Oferty, a następnie skontaktować się ze Sprzedawcą.
           </li>
           <li>
             Bilet należy okazać podczas wejścia do Ogrodu w formie elektronicznej

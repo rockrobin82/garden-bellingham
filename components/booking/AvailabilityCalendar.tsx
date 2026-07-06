@@ -348,6 +348,32 @@ export function AvailabilityCalendar() {
             Przejdź do płatności • {formatPrice(totalPrice)}
           </button>
         </div>
+
+        <div className="mt-4 flex gap-3 rounded-xl border border-border bg-[#f6faf7] p-4 text-sm leading-6 text-[#666]">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="mt-0.5 h-5 w-5 shrink-0 text-[#1f4d35]"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+          <div>
+            <p>
+              🎫 Bilet elektroniczny zostanie wysłany na podany adres e-mail
+              maksymalnie w ciągu 24 godzin od potwierdzenia płatności.
+            </p>
+            <p className="mt-2">
+              W większości przypadków następuje to w ciągu kilku minut.
+            </p>
+          </div>
+        </div>
       </div>
       </div>
     </section>
