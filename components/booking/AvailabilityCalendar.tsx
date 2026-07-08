@@ -1,6 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
+
+const emailSchema = z
+  .string()
+  .trim()
+  .min(1, "Adres e-mail jest wymagany.")
+  .email("Podaj prawidłowy adres e-mail.");
+
+function getEmailError(value: string): string {
+  const result = emailSchema.safeParse(value);
+  if (!result.success) {
+    return result.error.issues[0]?.message ?? "Podaj prawidłowy adres e-mail.";
+  }
+  return "";
+}
 
 type AvailabilityDate = {
   date: string;
@@ -33,6 +48,8 @@ export function AvailabilityCalendar() {
   const [selectedDate, setSelectedDate] = useState<AvailabilityDate | null>(null);
   const [selectedDateKey, setSelectedDateKey] = useState("");
   const [ticketQty, setTicketQty] = useState(0);
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
@@ -76,7 +93,13 @@ export function AvailabilityCalendar() {
   const totalPrice = selectedDate === null ? 0 : ticketQty * selectedDate.priceNormal;
   const maxTicketsForSelection = selectedDate?.maxTicketsPerOrder ?? 0;
   const canAddTicket = selectedDate !== null && selectedTickets < maxTicketsForSelection;
-  const canProceedToPayment = selectedTickets > 0 && acceptedTerms && acceptedPrivacy;
+  const isEmailValid = getEmailError(email) === "";
+  const canProceedToPayment =
+    selectedDate !== null &&
+    selectedTickets > 0 &&
+    isEmailValid &&
+    acceptedTerms &&
+    acceptedPrivacy;
 
   function selectDate(date: AvailabilityDate, key: string) {
     if (!date.active) {
@@ -105,9 +128,24 @@ export function AvailabilityCalendar() {
     }
   }
 
+  function handleEmailChange(value: string) {
+    setEmail(value);
+    setEmailError("");
+    setValidationMessage("");
+  }
+
+  function handleEmailBlur() {
+    if (email.trim().length === 0) {
+      return;
+    }
+
+    setEmailError(getEmailError(email));
+  }
+
   function handlePaymentAttempt() {
     if (canProceedToPayment) {
       setValidationMessage("");
+      setEmailError("");
       return;
     }
 
@@ -116,6 +154,14 @@ export function AvailabilityCalendar() {
       return;
     }
 
+    const nextEmailError = getEmailError(email);
+    if (nextEmailError) {
+      setEmailError(nextEmailError);
+      setValidationMessage("");
+      return;
+    }
+
+    setEmailError("");
     setValidationMessage("Przed przejściem do płatności zaakceptuj regulamin oraz politykę prywatności.");
   }
 
@@ -267,6 +313,38 @@ export function AvailabilityCalendar() {
             Wybierz aktywny termin z listy, aby skonfigurować bilety.
           </p>
         )}
+
+        <div className="mt-8 border-t border-border pt-5">
+          <h4 className="text-lg font-semibold text-[#1f4d35]">Adres e-mail</h4>
+
+          <div className="mt-4">
+            <label htmlFor="booking-email" className="sr-only">
+              Adres e-mail
+            </label>
+            <input
+              id="booking-email"
+              type="email"
+              name="email"
+              value={email}
+              onChange={(event) => handleEmailChange(event.target.value)}
+              onBlur={handleEmailBlur}
+              placeholder="twoj@email.pl"
+              autoComplete="email"
+              required
+              aria-invalid={emailError.length > 0}
+              aria-describedby={emailError ? "booking-email-error" : "booking-email-helper"}
+              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition placeholder:text-[#999] focus:border-[#1f4d35]"
+            />
+            <p id="booking-email-helper" className="mt-2 text-sm leading-5 text-[#666]">
+              Na ten adres wyślemy bilet elektroniczny oraz potwierdzenie zakupu.
+            </p>
+            {emailError ? (
+              <p id="booking-email-error" className="mt-2 text-sm text-red-600" role="alert">
+                {emailError}
+              </p>
+            ) : null}
+          </div>
+        </div>
 
         <div className="mt-8 border-t border-border pt-5">
         <h4 className="text-lg font-semibold text-[#1f4d35]">Zgody wymagane do płatności</h4>
