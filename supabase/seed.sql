@@ -1,0 +1,2 @@
+-- Optional local seed data for development.
+-- Intentionally empty for the booking MVP foundation.
