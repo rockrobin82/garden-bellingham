@@ -1,39 +1,20 @@
-import "server-only";
+import { createBrowserClient } from "@supabase/ssr";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-import { getEnv } from "@/lib/config/env";
 import type { Database } from "@/types/database";
 
-let supabaseAdminClient: SupabaseClient<Database> | null = null;
-
 /**
- * Returns a server-side Supabase client using the service role key.
- * All database access from API routes should go through this client.
+ * Supabase client for Client Components (browser).
+ * Uses the public anon/publishable key — safe to expose to the client.
  */
-export function getSupabaseAdminClient(): SupabaseClient<Database> {
-  if (supabaseAdminClient) {
-    return supabaseAdminClient;
-  }
+export function createClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const env = getEnv();
-
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!url || !key) {
     throw new Error(
-      "Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
     );
   }
 
-  supabaseAdminClient = createClient<Database>(
-    env.SUPABASE_URL,
-    env.SUPABASE_SERVICE_ROLE_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    },
-  );
-
-  return supabaseAdminClient;
+  return createBrowserClient<Database>(url, key);
 }

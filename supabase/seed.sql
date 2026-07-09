@@ -1,2 +1,3 @@
 -- Optional local seed data for development.
--- Intentionally empty for the booking MVP foundation.
+-- Add INSERT statements here after the first migration.
+-- Applied automatically on `npm run db:reset`.

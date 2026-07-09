@@ -11,9 +11,11 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --local > types/database.generated.ts"
+    "db:types": "supabase gen types typescript --local > types/database.generated.ts",
+    "db:link": "supabase link"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.1",
     "googleapis": "^172.0.0",
     "next": "^15.5.18",
