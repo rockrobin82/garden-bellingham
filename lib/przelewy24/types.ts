@@ -103,6 +103,19 @@ export type TransactionNotificationSignParams = {
   crc: string;
 };
 
+export type TransactionNotificationPayload = {
+  merchantId: number;
+  posId: number;
+  sessionId: string;
+  amount: number;
+  originAmount: number;
+  currency: P24Currency;
+  orderId: number;
+  methodId: number;
+  statement: string;
+  sign: string;
+};
+
 export type RefundNotificationSignParams = {
   orderId: number;
   sessionId: string;

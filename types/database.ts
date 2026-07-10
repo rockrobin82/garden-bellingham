@@ -42,6 +42,30 @@ export type OrderUpdate = Partial<
   Omit<OrderRow, "id" | "created_at" | "updated_at">
 >;
 
+export type TicketRow = {
+  id: string;
+  order_id: string;
+  ticket_code: string;
+  qr_payload: string;
+  status: string;
+  created_at: string;
+  used_at: string | null;
+};
+
+export type TicketInsert = {
+  id?: string;
+  order_id: string;
+  ticket_code: string;
+  qr_payload: string;
+  status?: string;
+  created_at?: string;
+  used_at?: string | null;
+};
+
+export type TicketUpdate = Partial<
+  Omit<TicketRow, "id" | "created_at">
+>;
+
 export type Database = {
   public: {
     Tables: {
@@ -49,6 +73,12 @@ export type Database = {
         Row: OrderRow;
         Insert: OrderInsert;
         Update: OrderUpdate;
+        Relationships: [];
+      };
+      tickets: {
+        Row: TicketRow;
+        Insert: TicketInsert;
+        Update: TicketUpdate;
         Relationships: [];
       };
     };

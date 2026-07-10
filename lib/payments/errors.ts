@@ -21,3 +21,17 @@ export class OrderNotPayableError extends PaymentRequestError {
     this.name = "OrderNotPayableError";
   }
 }
+
+export class InvalidNotificationSignatureError extends PaymentRequestError {
+  constructor() {
+    super("Invalid notification signature", 400);
+    this.name = "InvalidNotificationSignatureError";
+  }
+}
+
+export class PaymentAmountMismatchError extends PaymentRequestError {
+  constructor() {
+    super("Notification amount does not match order", 400);
+    this.name = "PaymentAmountMismatchError";
+  }
+}

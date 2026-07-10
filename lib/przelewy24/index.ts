@@ -21,6 +21,7 @@ export {
   type RegisterTransactionResult,
   type RegisterTransactionSignParams,
   type TransactionNotificationSignParams,
+  type TransactionNotificationPayload,
   type VerifyTransactionInput,
   type VerifyTransactionRequest,
   type VerifyTransactionResponseData,
