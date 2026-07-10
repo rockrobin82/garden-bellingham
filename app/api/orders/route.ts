@@ -74,6 +74,9 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
+    console.log(`${LOG_PREFIX} Creating order started`);
+    console.log(`${LOG_PREFIX} Request payload:`, parsed.data);
+
     const result: CreateOrderResponse = await createOrder(parsed.data);
 
     return Response.json(result, {
@@ -85,6 +88,12 @@ export async function POST(request: Request): Promise<Response> {
   } catch (error) {
     if (error instanceof OrderRequestError) {
       return Response.json({ error: error.message }, { status: error.status });
+    }
+
+    console.error("POST /api/orders FAILED");
+    console.error(error);
+    if (error instanceof Error) {
+      console.error(error.stack);
     }
 
     logOrdersRouteError(error);
