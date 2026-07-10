@@ -15,6 +15,7 @@ export type OrderRow = {
   p24_token: string | null;
   paid_at: string | null;
   email_sent_at: string | null;
+  sheet_synced_at: string | null;
   payment_metadata: Record<string, unknown>;
   notes: string | null;
 };
@@ -34,6 +35,7 @@ export type OrderInsert = {
   p24_token?: string | null;
   paid_at?: string | null;
   email_sent_at?: string | null;
+  sheet_synced_at?: string | null;
   payment_metadata?: Record<string, unknown>;
   notes?: string | null;
 };
