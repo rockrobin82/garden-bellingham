@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
+import { startCheckout } from "@/lib/booking/start-checkout";
+
 const emailSchema = z
   .string()
   .trim()
@@ -53,6 +55,7 @@ export function AvailabilityCalendar() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -143,6 +146,10 @@ export function AvailabilityCalendar() {
   }
 
   function handlePaymentAttempt() {
+    if (isSubmitting) {
+      return;
+    }
+
     if (canProceedToPayment) {
       setValidationMessage("");
       setEmailError("");
@@ -163,6 +170,39 @@ export function AvailabilityCalendar() {
 
     setEmailError("");
     setValidationMessage("Przed przejściem do płatności zaakceptuj regulamin oraz politykę prywatności.");
+  }
+
+  async function handleProceedToPayment() {
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!canProceedToPayment || selectedDate === null) {
+      handlePaymentAttempt();
+      return;
+    }
+
+    setIsSubmitting(true);
+    setValidationMessage("");
+    setEmailError("");
+
+    try {
+      const redirectUrl = await startCheckout({
+        bookingDate: selectedDate.date,
+        email: email.trim(),
+        ticketQty,
+      });
+
+      window.location.assign(redirectUrl);
+    } catch (error) {
+      console.error("Checkout error", error);
+      setValidationMessage(
+        error instanceof Error
+          ? error.message
+          : "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+      );
+      setIsSubmitting(false);
+    }
   }
 
   if (state === "loading") {
@@ -274,7 +314,7 @@ export function AvailabilityCalendar() {
                     <button
                       type="button"
                       onClick={() => updateTicketCount("decrease")}
-                      disabled={ticketQty === 0}
+                      disabled={ticketQty === 0 || isSubmitting}
                       className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       -
@@ -283,7 +323,7 @@ export function AvailabilityCalendar() {
                     <button
                       type="button"
                       onClick={() => updateTicketCount("increase")}
-                      disabled={!canAddTicket}
+                      disabled={!canAddTicket || isSubmitting}
                       className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       +
@@ -331,6 +371,7 @@ export function AvailabilityCalendar() {
               placeholder="twoj@email.pl"
               autoComplete="email"
               required
+              disabled={isSubmitting}
               aria-invalid={emailError.length > 0}
               aria-describedby={emailError ? "booking-email-error" : "booking-email-helper"}
               className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition placeholder:text-[#999] focus:border-[#1f4d35]"
@@ -358,6 +399,7 @@ export function AvailabilityCalendar() {
                 setAcceptedTerms(event.target.checked);
                 setValidationMessage("");
               }}
+              disabled={isSubmitting}
               className="mt-1 h-4 w-4 rounded border-border accent-[#1f4d35]"
               required
             />
@@ -383,6 +425,7 @@ export function AvailabilityCalendar() {
                 setAcceptedPrivacy(event.target.checked);
                 setValidationMessage("");
               }}
+              disabled={isSubmitting}
               className="mt-1 h-4 w-4 rounded border-border accent-[#1f4d35]"
               required
             />
@@ -417,13 +460,17 @@ export function AvailabilityCalendar() {
           </p>
         ) : null}
 
-        <div className="mt-5" onClick={handlePaymentAttempt}>
+        <div className="mt-5">
           <button
             type="button"
-            disabled={!canProceedToPayment}
+            onClick={() => void handleProceedToPayment()}
+            disabled={!canProceedToPayment || isSubmitting}
+            aria-busy={isSubmitting}
             className="garden-btn w-full px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 disabled:pointer-events-none sm:w-auto"
           >
-            Przejdź do płatności • {formatPrice(totalPrice)}
+            {isSubmitting
+              ? "Przekierowywanie do płatności..."
+              : `Przejdź do płatności • ${formatPrice(totalPrice)}`}
           </button>
         </div>
 
