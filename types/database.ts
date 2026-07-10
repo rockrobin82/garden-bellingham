@@ -12,6 +12,7 @@ export type OrderRow = {
   payment_status: PaymentStatus;
   p24_session_id: string | null;
   p24_order_id: string | null;
+  p24_token: string | null;
   paid_at: string | null;
   email_sent_at: string | null;
   payment_metadata: Record<string, unknown>;
@@ -30,6 +31,7 @@ export type OrderInsert = {
   payment_status?: PaymentStatus;
   p24_session_id?: string | null;
   p24_order_id?: string | null;
+  p24_token?: string | null;
   paid_at?: string | null;
   email_sent_at?: string | null;
   payment_metadata?: Record<string, unknown>;

@@ -17,3 +17,8 @@ export type CreateOrderResponse = {
   status: "pending";
   totalAmountMinor: number;
 };
+
+export type CreateP24PaymentResponse = {
+  redirectUrl: string;
+  token: string;
+};
