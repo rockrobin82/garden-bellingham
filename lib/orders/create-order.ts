@@ -53,7 +53,9 @@ export async function createOrder(
     .single();
 
   if (error || !data) {
-    throw new Error(error?.message ?? "Failed to create order");
+    throw new Error(error?.message ?? "Failed to create order", {
+      cause: error ?? undefined,
+    });
   }
 
   return {
