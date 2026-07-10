@@ -6,6 +6,14 @@ export { generateQrPng } from "@/lib/tickets/qr";
 export { validateTicket, type TicketValidationResult } from "@/lib/tickets/validate-ticket";
 export { checkInTicket, type TicketCheckInResult } from "@/lib/tickets/check-in-ticket";
 export {
+  scanTicket,
+  type ScanTicketCancelledResult,
+  type ScanTicketNotFoundResult,
+  type ScanTicketResult,
+  type ScanTicketUsedResult,
+  type ScanTicketValidResult,
+} from "@/lib/tickets/scan-ticket";
+export {
   TicketAlreadyUsedError,
   TicketCancelledError,
   TicketNotFoundError,
