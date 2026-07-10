@@ -8,6 +8,7 @@ import {
   OrderNotPayableError,
   PaymentAmountMismatchError,
 } from "@/lib/payments/errors";
+import { finalizePaidOrder } from "@/lib/payments/finalize-paid-order";
 import {
   createP24Client,
   getP24Config,
@@ -15,7 +16,6 @@ import {
   verifyTransaction,
   type TransactionNotificationPayload,
 } from "@/lib/przelewy24";
-import { generateTicketsForOrder } from "@/lib/tickets";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { PaymentStatus } from "@/types/database";
 
@@ -122,7 +122,7 @@ export async function handleP24WebhookNotification(
   }
 
   if (order.payment_status === "paid") {
-    await generateTicketsForOrder(order.id);
+    await finalizePaidOrder(order.id);
     return;
   }
 
@@ -173,12 +173,12 @@ export async function handleP24WebhookNotification(
     }
 
     if (currentOrder?.payment_status === "paid") {
-      await generateTicketsForOrder(order.id);
+      await finalizePaidOrder(order.id);
       return;
     }
 
     throw new Error("Failed to mark order as paid");
   }
 
-  await generateTicketsForOrder(order.id);
+  await finalizePaidOrder(order.id);
 }

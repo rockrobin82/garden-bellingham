@@ -58,7 +58,7 @@ export async function createP24Payment(
     email: order.customer_email,
     country: "PL",
     language: "pl",
-    urlReturn: `${appUrl}/`,
+    urlReturn: `${appUrl}/payment/success`,
     urlStatus: `${appUrl}/api/payments/przelewy24/webhook`,
   });
 
