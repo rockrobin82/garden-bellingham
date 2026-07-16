@@ -8,6 +8,7 @@ import {
   getOrderWithTickets,
   getTicketQrImagePath,
 } from "@/lib/orders/get-order-with-tickets";
+import { getTicketBreakdown } from "@/lib/orders/ticket-breakdown";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function OrderPage({ params }: PageProps) {
   }
 
   const { order, tickets } = result;
+  const ticketBreakdown = getTicketBreakdown(order);
 
   return (
     <main className="bg-white px-6 py-10 text-[#1f4d35] sm:px-10 sm:py-14">
@@ -79,9 +81,13 @@ export default async function OrderPage({ params }: PageProps) {
               <dd className="mt-1 font-medium break-all">{order.customer_email}</dd>
             </div>
 
-            <div className="rounded-xl border border-border bg-white p-4">
-              <dt className="text-sm text-[#666]">Liczba biletów</dt>
-              <dd className="mt-1 font-medium">{order.ticket_qty}</dd>
+            <div className="rounded-xl border border-border bg-white p-4 sm:col-span-2">
+              <dt className="text-sm text-[#666]">Bilety</dt>
+              <dd className="mt-2 space-y-1 font-medium">
+                <p>Normalne: {ticketBreakdown.normalQty}</p>
+                <p>Ulgowe: {ticketBreakdown.reducedQty}</p>
+                <p>Łącznie: {ticketBreakdown.totalQty}</p>
+              </dd>
             </div>
           </dl>
         </section>

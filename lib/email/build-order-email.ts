@@ -13,6 +13,14 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
+function formatTicketBreakdown(data: OrderEmailData): string[] {
+  return [
+    `Normalne: ${data.normalQty}`,
+    `Ulgowe: ${data.reducedQty}`,
+    `Łącznie: ${data.totalQty}`,
+  ];
+}
+
 /**
  * Builds the order confirmation email content.
  * Attachments can be added later for PDF tickets without changing send flow.
@@ -20,13 +28,13 @@ function escapeHtml(value: string): string {
 export function buildOrderEmailContent(data: OrderEmailData): OrderEmailContent {
   const visitDate = escapeHtml(data.visitDate);
   const orderPageUrl = escapeHtml(data.orderPageUrl);
-  const ticketCount = data.ticketCount;
+  const breakdownLines = formatTicketBreakdown(data);
 
   const text = [
     "Dziękujemy za zakup.",
     "",
     `Data wizyty: ${data.visitDate}`,
-    `Liczba biletów: ${ticketCount}`,
+    ...breakdownLines,
     "",
     "Otwórz swoje bilety:",
     data.orderPageUrl,
@@ -37,7 +45,9 @@ export function buildOrderEmailContent(data: OrderEmailData): OrderEmailContent 
       <p>Dziękujemy za zakup.</p>
       <p>Twoje bilety do Ogrodu Katarzyny Bellingham są gotowe.</p>
       <p><strong>Data wizyty:</strong> ${visitDate}</p>
-      <p><strong>Liczba biletów:</strong> ${ticketCount}</p>
+      <p><strong>Normalne:</strong> ${data.normalQty}</p>
+      <p><strong>Ulgowe:</strong> ${data.reducedQty}</p>
+      <p><strong>Łącznie:</strong> ${data.totalQty}</p>
       <p style="margin-top: 24px;">
         <a
           href="${orderPageUrl}"

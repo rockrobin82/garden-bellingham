@@ -2,7 +2,8 @@ import "server-only";
 
 import { buildOrderEmailContent } from "@/lib/email/build-order-email";
 import { getMailFromAddress, getResendClient } from "@/lib/email/client";
-import { getOrderPageUrl, getOrderWithTickets } from "@/lib/orders/get-order-with-tickets";
+import { getOrderPageUrl } from "@/lib/orders/get-order-with-tickets";
+import { getTicketBreakdown } from "@/lib/orders/ticket-breakdown";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -14,7 +15,7 @@ export async function sendOrderEmail(orderId: string): Promise<void> {
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .select(
-      "id, booking_date, customer_email, ticket_qty, payment_status, email_sent_at",
+      "id, booking_date, customer_email, ticket_qty, normal_qty, reduced_qty, payment_status, email_sent_at",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -35,19 +36,14 @@ export async function sendOrderEmail(orderId: string): Promise<void> {
     return;
   }
 
-  const orderWithTickets = await getOrderWithTickets(orderId);
-
-  if (!orderWithTickets) {
-    throw new Error(`Order not found: ${orderId}`);
-  }
+  const ticketBreakdown = getTicketBreakdown(order);
 
   const emailContent = buildOrderEmailContent({
     customerEmail: order.customer_email,
     visitDate: order.booking_date,
-    ticketCount:
-      orderWithTickets.tickets.length > 0
-        ? orderWithTickets.tickets.length
-        : order.ticket_qty,
+    normalQty: ticketBreakdown.normalQty,
+    reducedQty: ticketBreakdown.reducedQty,
+    totalQty: ticketBreakdown.totalQty,
     orderPageUrl: getOrderPageUrl(order.id),
   });
 

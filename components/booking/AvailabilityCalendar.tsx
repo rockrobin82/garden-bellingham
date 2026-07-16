@@ -44,12 +44,65 @@ function formatPrice(value: number): string {
   }).format(value);
 }
 
+type TicketTypeRowProps = {
+  label: string;
+  price: number;
+  quantity: number;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  canDecrease: boolean;
+  canIncrease: boolean;
+  disabled: boolean;
+};
+
+function TicketTypeRow({
+  label,
+  price,
+  quantity,
+  onDecrease,
+  onIncrease,
+  canDecrease,
+  canIncrease,
+  disabled,
+}: TicketTypeRowProps) {
+  return (
+    <div className="rounded-xl border border-border p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium text-[#1f4d35]">{label}</p>
+          <p className="text-sm text-[#666]">Cena: {formatPrice(price)}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onDecrease}
+            disabled={!canDecrease || disabled}
+            className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            -
+          </button>
+          <span className="min-w-6 text-center font-medium">{quantity}</span>
+          <button
+            type="button"
+            onClick={onIncrease}
+            disabled={!canIncrease || disabled}
+            className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            +
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AvailabilityCalendar() {
   const [state, setState] = useState<LoadState>("loading");
   const [dates, setDates] = useState<AvailabilityDate[]>([]);
   const [selectedDate, setSelectedDate] = useState<AvailabilityDate | null>(null);
   const [selectedDateKey, setSelectedDateKey] = useState("");
-  const [ticketQty, setTicketQty] = useState(0);
+  const [normalQty, setNormalQty] = useState(0);
+  const [reducedQty, setReducedQty] = useState(0);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -92,10 +145,14 @@ export function AvailabilityCalendar() {
     };
   }, []);
 
-  const selectedTickets = ticketQty;
-  const totalPrice = selectedDate === null ? 0 : ticketQty * selectedDate.priceNormal;
+  const selectedTickets = normalQty + reducedQty;
+  const totalPrice =
+    selectedDate === null
+      ? 0
+      : normalQty * selectedDate.priceNormal + reducedQty * selectedDate.priceReduced;
   const maxTicketsForSelection = selectedDate?.maxTicketsPerOrder ?? 0;
-  const canAddTicket = selectedDate !== null && selectedTickets < maxTicketsForSelection;
+  const canAddTicket =
+    selectedDate !== null && selectedTickets < maxTicketsForSelection;
   const isEmailValid = getEmailError(email) === "";
   const canProceedToPayment =
     selectedDate !== null &&
@@ -111,22 +168,28 @@ export function AvailabilityCalendar() {
 
     setSelectedDate(date);
     setSelectedDateKey(key);
-    setTicketQty(0);
+    setNormalQty(0);
+    setReducedQty(0);
     setValidationMessage("");
     window.setTimeout(() => {
       summaryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 0);
   }
 
-  function updateTicketCount(direction: "increase" | "decrease") {
+  function updateTicketCount(
+    type: "normal" | "reduced",
+    direction: "increase" | "decrease",
+  ) {
+    const setQuantity = type === "normal" ? setNormalQty : setReducedQty;
+
     if (direction === "decrease") {
-      setTicketQty((current) => Math.max(0, current - 1));
+      setQuantity((current) => Math.max(0, current - 1));
       setValidationMessage("");
       return;
     }
 
     if (canAddTicket) {
-      setTicketQty((current) => current + 1);
+      setQuantity((current) => current + 1);
       setValidationMessage("");
     }
   }
@@ -190,7 +253,8 @@ export function AvailabilityCalendar() {
       const redirectUrl = await startCheckout({
         bookingDate: selectedDate.date,
         email: email.trim(),
-        ticketQty,
+        normalQty,
+        reducedQty,
       });
 
       window.location.assign(redirectUrl);
@@ -279,7 +343,10 @@ export function AvailabilityCalendar() {
 
               <p className="mt-3 text-sm text-[#666]">Pozostało: {item.remaining}</p>
               <p className="text-sm text-[#666]">
-                Bilet: {formatPrice(item.priceNormal)}
+                Normalny: {formatPrice(item.priceNormal)}
+              </p>
+              <p className="text-sm text-[#666]">
+                Ulgowy: {formatPrice(item.priceReduced)}
               </p>
 
               {item.note ? (
@@ -304,46 +371,31 @@ export function AvailabilityCalendar() {
             </div>
 
             <div className="grid gap-3">
-              <div className="rounded-xl border border-border p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-[#1f4d35]">Bilet</p>
-                    <p className="text-sm text-[#666]">{formatPrice(selectedDate.priceNormal)}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => updateTicketCount("decrease")}
-                      disabled={ticketQty === 0 || isSubmitting}
-                      className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      -
-                    </button>
-                    <span className="min-w-6 text-center font-medium">{ticketQty}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateTicketCount("increase")}
-                      disabled={!canAddTicket || isSubmitting}
-                      className="h-9 w-9 rounded-xl border border-border text-[#1f4d35] transition hover:bg-[#f6faf7] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <TicketTypeRow
+                label="Normalny"
+                price={selectedDate.priceNormal}
+                quantity={normalQty}
+                onDecrease={() => updateTicketCount("normal", "decrease")}
+                onIncrease={() => updateTicketCount("normal", "increase")}
+                canDecrease={normalQty > 0}
+                canIncrease={canAddTicket}
+                disabled={isSubmitting}
+              />
+              <TicketTypeRow
+                label="Ulgowy"
+                price={selectedDate.priceReduced}
+                quantity={reducedQty}
+                onDecrease={() => updateTicketCount("reduced", "decrease")}
+                onIncrease={() => updateTicketCount("reduced", "increase")}
+                canDecrease={reducedQty > 0}
+                canIncrease={canAddTicket}
+                disabled={isSubmitting}
+              />
             </div>
 
             <div className="space-y-3 border-t border-border pt-4">
               <div className="flex items-center justify-between gap-4">
-                <p className="text-sm text-[#666]">Cena biletu</p>
-                <p className="font-medium text-[#1f4d35]">{formatPrice(selectedDate.priceNormal)}</p>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm text-[#666]">Liczba biletów</p>
-                <p className="font-medium text-[#1f4d35]">{ticketQty}</p>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <p className="font-medium text-[#1f4d35]">Łączna kwota</p>
+                <p className="font-medium text-[#1f4d35]">Razem</p>
                 <p className="text-xl font-semibold text-[#1f4d35]">{formatPrice(totalPrice)}</p>
               </div>
             </div>

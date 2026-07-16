@@ -6,7 +6,13 @@ import type { OrderRow, PaymentStatus, TicketRow } from "@/types/database";
 
 export type OrderSummary = Pick<
   OrderRow,
-  "id" | "booking_date" | "customer_email" | "ticket_qty" | "payment_status"
+  | "id"
+  | "booking_date"
+  | "customer_email"
+  | "ticket_qty"
+  | "normal_qty"
+  | "reduced_qty"
+  | "payment_status"
 >;
 
 export type OrderTicketSummary = Pick<
@@ -20,7 +26,7 @@ export type OrderWithTickets = {
 };
 
 const ORDER_SELECT =
-  "id, booking_date, customer_email, ticket_qty, payment_status" as const;
+  "id, booking_date, customer_email, ticket_qty, normal_qty, reduced_qty, payment_status" as const;
 
 const TICKET_SELECT = "ticket_code, status, used_at" as const;
 

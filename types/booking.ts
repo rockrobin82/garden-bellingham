@@ -3,13 +3,15 @@ export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled";
 export type CheckoutPayload = {
   visitDate: string;
   email: string;
-  ticketQty: number;
+  normalQty: number;
+  reducedQty: number;
 };
 
 export type CreateOrderRequest = {
   bookingDate: string;
   email: string;
-  ticketQty: number;
+  normalQty: number;
+  reducedQty: number;
 };
 
 export type CreateOrderResponse = {

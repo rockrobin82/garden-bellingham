@@ -18,6 +18,8 @@ export type OrderEmailContent = {
 export type OrderEmailData = {
   customerEmail: string;
   visitDate: string;
-  ticketCount: number;
+  normalQty: number;
+  reducedQty: number;
+  totalQty: number;
   orderPageUrl: string;
 };

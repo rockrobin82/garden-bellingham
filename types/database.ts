@@ -7,6 +7,8 @@ export type OrderRow = {
   booking_date: string;
   customer_email: string;
   ticket_qty: number;
+  normal_qty: number;
+  reduced_qty: number;
   unit_price_minor: number;
   total_amount_minor: number;
   payment_status: PaymentStatus;
@@ -27,6 +29,8 @@ export type OrderInsert = {
   booking_date: string;
   customer_email: string;
   ticket_qty: number;
+  normal_qty: number;
+  reduced_qty: number;
   unit_price_minor: number;
   total_amount_minor: number;
   payment_status?: PaymentStatus;

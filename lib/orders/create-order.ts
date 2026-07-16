@@ -1,5 +1,6 @@
 import "server-only";
 
+import { calculateOrderPricing } from "@/lib/orders/calculate-order-pricing";
 import {
   BookingDateInactiveError,
   BookingDateNotFoundError,
@@ -11,10 +12,6 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { CreateOrderRequest, CreateOrderResponse } from "@/types/booking";
 
 const LOG_PREFIX = "[createOrder]";
-
-function plnToMinor(amountPln: number): number {
-  return Math.round(amountPln * 100);
-}
 
 function logException(error: unknown): void {
   console.error(`${LOG_PREFIX} Exception:`, error);
@@ -47,14 +44,19 @@ export async function createOrder(
       throw new BookingDateInactiveError(input.bookingDate);
     }
 
+    const ticketQty = input.normalQty + input.reducedQty;
     const remaining = Math.max(0, dateRow.ticket_limit - dateRow.sold_count);
 
-    if (input.ticketQty > remaining) {
+    if (ticketQty > remaining) {
       throw new InsufficientTicketsError(remaining);
     }
 
-    const unitPriceMinor = plnToMinor(dateRow.price_normal);
-    const totalAmountMinor = unitPriceMinor * input.ticketQty;
+    const pricing = calculateOrderPricing({
+      normalQty: input.normalQty,
+      reducedQty: input.reducedQty,
+      priceNormalPln: dateRow.price_normal,
+      priceReducedPln: dateRow.price_reduced,
+    });
 
     console.log(`${LOG_PREFIX} Creating Supabase admin client`);
     const supabase = getSupabaseAdminClient();
@@ -63,9 +65,11 @@ export async function createOrder(
     const insertPayload = {
       booking_date: input.bookingDate,
       customer_email: input.email,
-      ticket_qty: input.ticketQty,
-      unit_price_minor: unitPriceMinor,
-      total_amount_minor: totalAmountMinor,
+      ticket_qty: pricing.ticketQty,
+      normal_qty: pricing.normalQty,
+      reduced_qty: pricing.reducedQty,
+      unit_price_minor: pricing.unitPriceMinor,
+      total_amount_minor: pricing.totalAmountMinor,
       payment_status: "pending" as const,
     };
 
