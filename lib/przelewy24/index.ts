@@ -2,8 +2,10 @@ export { getP24Config, resetP24ConfigCache, type P24Config } from "@/lib/przelew
 export { createP24Client, P24Client, type P24ClientOptions } from "@/lib/przelewy24/client";
 export { registerTransaction } from "@/lib/przelewy24/register";
 export { verifyTransaction } from "@/lib/przelewy24/verify";
+export { refundTransaction } from "@/lib/przelewy24/refund";
 export {
   signRefundNotification,
+  signRefundTransaction,
   signRegisterTransaction,
   signSha384,
   signTransactionNotification,
@@ -15,6 +17,13 @@ export {
   type P24ApiResponse,
   type P24Currency,
   type RefundNotificationSignParams,
+  type RefundTransactionInput,
+  type RefundTransactionItemInput,
+  type RefundTransactionRequest,
+  type RefundTransactionResponseData,
+  type RefundTransactionResponseItem,
+  type RefundTransactionResult,
+  type RefundTransactionSignParams,
   type RegisterTransactionInput,
   type RegisterTransactionRequest,
   type RegisterTransactionResponseData,

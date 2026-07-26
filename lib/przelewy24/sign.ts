@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 
 import type {
   RefundNotificationSignParams,
+  RefundTransactionSignParams,
   RegisterTransactionSignParams,
   TransactionNotificationSignParams,
   VerifyTransactionSignParams,
@@ -55,6 +56,19 @@ export function signTransactionNotification(
     orderId: params.orderId,
     methodId: params.methodId,
     statement: params.statement,
+    crc: params.crc,
+  });
+}
+
+/** Signature for `POST /transaction/refund`. */
+export function signRefundTransaction(
+  params: RefundTransactionSignParams,
+): string {
+  return signSha384({
+    requestId: params.requestId,
+    refundsUuid: params.refundsUuid,
+    amount: params.amount,
+    currency: params.currency,
     crc: params.crc,
   });
 }

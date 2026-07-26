@@ -1,0 +1,109 @@
+import "server-only";
+
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { OrderRow, TicketRow } from "@/types/database";
+
+export type AdminOrderListItem = Pick<
+  OrderRow,
+  | "id"
+  | "booking_date"
+  | "customer_email"
+  | "ticket_qty"
+  | "normal_qty"
+  | "reduced_qty"
+  | "total_amount_minor"
+  | "payment_status"
+  | "created_at"
+>;
+
+export type AdminOrderDetails = Pick<
+  OrderRow,
+  | "id"
+  | "booking_date"
+  | "customer_email"
+  | "ticket_qty"
+  | "normal_qty"
+  | "reduced_qty"
+  | "total_amount_minor"
+  | "payment_status"
+  | "p24_session_id"
+  | "created_at"
+  | "paid_at"
+  | "email_sent_at"
+  | "sheet_synced_at"
+  | "refunded_at"
+  | "refund_id"
+  | "refund_amount_minor"
+  | "refund_reason"
+>;
+
+export type AdminTicketItem = Pick<
+  TicketRow,
+  "ticket_code" | "status" | "used_at"
+>;
+
+export type AdminOrderWithTickets = {
+  order: AdminOrderDetails;
+  tickets: AdminTicketItem[];
+};
+
+const LIST_SELECT =
+  "id, booking_date, customer_email, ticket_qty, normal_qty, reduced_qty, total_amount_minor, payment_status, created_at" as const;
+
+const DETAILS_SELECT =
+  "id, booking_date, customer_email, ticket_qty, normal_qty, reduced_qty, total_amount_minor, payment_status, p24_session_id, created_at, paid_at, email_sent_at, sheet_synced_at, refunded_at, refund_id, refund_amount_minor, refund_reason" as const;
+
+const TICKET_SELECT = "ticket_code, status, used_at" as const;
+
+export async function listAdminOrders(
+  limit = 100,
+): Promise<AdminOrderListItem[]> {
+  const supabase = getSupabaseAdminClient();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select(LIST_SELECT)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function getAdminOrderWithTickets(
+  orderId: string,
+): Promise<AdminOrderWithTickets | null> {
+  const supabase = getSupabaseAdminClient();
+
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .select(DETAILS_SELECT)
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (orderError) {
+    throw new Error(orderError.message);
+  }
+
+  if (!order) {
+    return null;
+  }
+
+  const { data: tickets, error: ticketsError } = await supabase
+    .from("tickets")
+    .select(TICKET_SELECT)
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: true });
+
+  if (ticketsError) {
+    throw new Error(ticketsError.message);
+  }
+
+  return {
+    order,
+    tickets: tickets ?? [],
+  };
+}

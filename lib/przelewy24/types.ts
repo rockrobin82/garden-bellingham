@@ -127,6 +127,51 @@ export type RefundNotificationSignParams = {
   crc: string;
 };
 
+export type RefundTransactionSignParams = {
+  requestId: string;
+  refundsUuid: string;
+  amount: number;
+  currency: string;
+  crc: string;
+};
+
+export type RefundTransactionItemInput = {
+  orderId: number;
+  sessionId: string;
+  amount: number;
+  description: string;
+};
+
+export type RefundTransactionInput = {
+  requestId: string;
+  refundsUuid: string;
+  refunds: ReadonlyArray<RefundTransactionItemInput>;
+  currency?: P24Currency;
+  urlStatus?: string;
+};
+
+export type RefundTransactionRequest = RefundTransactionInput & {
+  sign: string;
+};
+
+export type RefundTransactionResponseItem = {
+  orderId: number;
+  sessionId: string;
+  status: boolean;
+  message?: string;
+};
+
+export type RefundTransactionResponseData =
+  ReadonlyArray<RefundTransactionResponseItem>;
+
+export type RefundTransactionResult = {
+  requestId: string;
+  refundsUuid: string;
+  amount: number;
+  currency: P24Currency;
+  items: RefundTransactionResponseData;
+};
+
 export class P24ApiError extends Error {
   readonly statusCode: number;
   readonly responseCode?: number;

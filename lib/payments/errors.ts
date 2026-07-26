@@ -35,3 +35,24 @@ export class PaymentAmountMismatchError extends PaymentRequestError {
     this.name = "PaymentAmountMismatchError";
   }
 }
+
+export class OrderAlreadyRefundedError extends PaymentRequestError {
+  constructor(orderId: string) {
+    super(`Order already refunded: ${orderId}`, 409);
+    this.name = "OrderAlreadyRefundedError";
+  }
+}
+
+export class OrderNotRefundableError extends PaymentRequestError {
+  constructor(orderId: string) {
+    super(`Order is not refundable: ${orderId}`, 409);
+    this.name = "OrderNotRefundableError";
+  }
+}
+
+export class OrderMissingPaymentDataError extends PaymentRequestError {
+  constructor(orderId: string) {
+    super(`Order is missing Przelewy24 payment data: ${orderId}`, 422);
+    this.name = "OrderMissingPaymentDataError";
+  }
+}

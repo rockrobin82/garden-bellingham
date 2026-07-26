@@ -1,4 +1,9 @@
-export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled";
+export type PaymentStatus =
+  | "pending"
+  | "paid"
+  | "failed"
+  | "cancelled"
+  | "refunded";
 
 export type OrderRow = {
   id: string;
@@ -18,6 +23,10 @@ export type OrderRow = {
   paid_at: string | null;
   email_sent_at: string | null;
   sheet_synced_at: string | null;
+  refunded_at: string | null;
+  refund_id: string | null;
+  refund_amount_minor: number | null;
+  refund_reason: string | null;
   payment_metadata: Record<string, unknown>;
   notes: string | null;
 };
@@ -40,6 +49,10 @@ export type OrderInsert = {
   paid_at?: string | null;
   email_sent_at?: string | null;
   sheet_synced_at?: string | null;
+  refunded_at?: string | null;
+  refund_id?: string | null;
+  refund_amount_minor?: number | null;
+  refund_reason?: string | null;
   payment_metadata?: Record<string, unknown>;
   notes?: string | null;
 };

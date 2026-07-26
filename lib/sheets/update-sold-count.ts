@@ -139,3 +139,50 @@ export async function updateSoldCountForOrder(orderId: string): Promise<void> {
     throw new Error(syncError.message);
   }
 }
+
+/**
+ * Decreases sold_count in the dates sheet after a successful refund.
+ * Does not roll back the refund on failure — caller should log and continue.
+ */
+export async function decreaseSoldCountForOrder(orderId: string): Promise<void> {
+  const supabase = getSupabaseAdminClient();
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .select("id, booking_date, ticket_qty")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (orderError) {
+    throw new Error(orderError.message);
+  }
+
+  if (!order) {
+    throw new Error(`Order not found: ${orderId}`);
+  }
+
+  const rawRows = await readSheetRange(SHEET_TABS.dates, "A:Z");
+  const dateRow = findDateSheetRow(rawRows, order.booking_date);
+
+  if (!dateRow) {
+    throw new Error(
+      `Booking date not found in Google Sheets: ${order.booking_date}`,
+    );
+  }
+
+  const newSoldCount = Math.max(0, dateRow.soldCount - order.ticket_qty);
+  const soldCountColumnIndex = SHEET_COLUMNS.dates.indexOf("sold_count");
+  const soldCountColumn = columnIndexToLetter(soldCountColumnIndex);
+  const cellRange = toA1Range(`${soldCountColumn}${dateRow.sheetRowNumber}`);
+
+  const env = getEnv();
+  const sheets = getGoogleSheetsClient();
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: env.GOOGLE_SHEETS_SPREADSHEET_ID,
+    range: cellRange,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[newSoldCount]],
+    },
+  });
+}

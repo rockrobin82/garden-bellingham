@@ -1,8 +1,11 @@
 import "server-only";
 
 import { getEnv } from "@/lib/config/env";
+import { formatPaymentStatus } from "@/lib/orders/format-payment-status";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { OrderRow, PaymentStatus, TicketRow } from "@/types/database";
+import type { OrderRow, TicketRow } from "@/types/database";
+
+export { formatPaymentStatus };
 
 export type OrderSummary = Pick<
   OrderRow,
@@ -72,21 +75,6 @@ export function getOrderPagePath(orderId: string): string {
 export function getOrderPageUrl(orderId: string): string {
   const appUrl = getEnv().NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
   return `${appUrl}${getOrderPagePath(orderId)}`;
-}
-
-export function formatPaymentStatus(status: PaymentStatus): string {
-  switch (status) {
-    case "pending":
-      return "Oczekuje";
-    case "paid":
-      return "Opłacone";
-    case "failed":
-      return "Nieudane";
-    case "cancelled":
-      return "Anulowane";
-    default:
-      return status;
-  }
 }
 
 export function getTicketQrImagePath(ticketCode: string): string {
