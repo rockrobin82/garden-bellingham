@@ -55,16 +55,13 @@ const DETAILS_SELECT =
 
 const TICKET_SELECT = "ticket_code, status, used_at" as const;
 
-export async function listAdminOrders(
-  limit = 100,
-): Promise<AdminOrderListItem[]> {
+export async function listAdminOrders(): Promise<AdminOrderListItem[]> {
   const supabase = getSupabaseAdminClient();
 
   const { data, error } = await supabase
     .from("orders")
     .select(LIST_SELECT)
     .order("created_at", { ascending: false })
-    .limit(limit);
 
   if (error) {
     throw new Error(error.message);
