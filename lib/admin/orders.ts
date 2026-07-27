@@ -1,5 +1,9 @@
 import "server-only";
 
+import {
+  escapeIlikePattern,
+  type AdminOrderFilters,
+} from "@/lib/admin/order-filters";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { OrderRow, TicketRow } from "@/types/database";
 
@@ -55,13 +59,36 @@ const DETAILS_SELECT =
 
 const TICKET_SELECT = "ticket_code, status, used_at" as const;
 
-export async function listAdminOrders(): Promise<AdminOrderListItem[]> {
+export async function listAdminOrders(
+  filters: AdminOrderFilters = {},
+): Promise<AdminOrderListItem[]> {
   const supabase = getSupabaseAdminClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("orders")
     .select(LIST_SELECT)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (filters.search) {
+    query = query.ilike(
+      "customer_email",
+      `%${escapeIlikePattern(filters.search)}%`,
+    );
+  }
+
+  if (filters.status) {
+    query = query.eq("payment_status", filters.status);
+  }
+
+  if (filters.from) {
+    query = query.gte("booking_date", filters.from);
+  }
+
+  if (filters.to) {
+    query = query.lte("booking_date", filters.to);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(error.message);
