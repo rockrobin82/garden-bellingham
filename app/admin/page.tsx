@@ -11,7 +11,11 @@ import {
   hasActiveAdminOrderFilters,
   parseAdminOrderFilters,
 } from "@/lib/admin/order-filters";
-import { listAdminOrders, type AdminOrderListItem } from "@/lib/admin/orders";
+import {
+  countPendingInvoices,
+  listAdminOrders,
+  type AdminOrderListItem,
+} from "@/lib/admin/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +29,16 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
   const filtersActive = hasActiveAdminOrderFilters(filters);
 
   let orders: AdminOrderListItem[] = [];
+  let pendingInvoices = 0;
   let errorMessage: string | null = null;
 
   try {
-    orders = await listAdminOrders(filters);
+    const [orderRows, invoiceCount] = await Promise.all([
+      listAdminOrders(filters),
+      countPendingInvoices(),
+    ]);
+    orders = orderRows;
+    pendingInvoices = invoiceCount;
   } catch (error) {
     errorMessage =
       error instanceof Error ? error.message : "Nieoczekiwany błąd.";
@@ -45,6 +55,21 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           Najnowsze zamówienia biletów (najpierw najnowsze).
         </p>
       </header>
+
+      <Link
+        href="/admin?invoice=waiting"
+        className="garden-section block p-6 transition hover:bg-[#f3f8f5] sm:p-8"
+      >
+        <p className="text-sm font-medium uppercase tracking-wide text-[#666]">
+          🧾 Faktury do wystawienia
+        </p>
+        <p className="mt-2 text-3xl font-semibold text-[#1f4d35]">
+          {pendingInvoices}
+        </p>
+        <p className="mt-2 text-sm text-[#666]">
+          Zamówienia ze zgłoszoną fakturą VAT oczekujące na wystawienie.
+        </p>
+      </Link>
 
       <OrdersFilterForm filters={filters} />
 

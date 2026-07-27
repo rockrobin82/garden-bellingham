@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
+import { AdminOrderInvoiceSection } from "@/components/admin/AdminOrderInvoiceSection";
 import { AdminOrderRefundPanel } from "@/components/admin/AdminOrderRefundPanel";
 import { TicketsTable } from "@/components/admin/TicketsTable";
 import {
@@ -115,6 +116,18 @@ export default async function AdminOrderDetailsPage({ params }: PageProps) {
           />
         </dl>
       </section>
+
+      <AdminOrderInvoiceSection
+        orderId={order.id}
+        invoiceRequested={order.invoice_requested}
+        invoiceCompanyName={order.invoice_company_name}
+        invoiceNip={order.invoice_nip}
+        invoiceStreet={order.invoice_street}
+        invoicePostalCode={order.invoice_postal_code}
+        invoiceCity={order.invoice_city}
+        invoiceIssued={order.invoice_issued}
+        invoiceIssuedAt={order.invoice_issued_at}
+      />
 
       <AdminOrderRefundPanel
         orderId={order.id}

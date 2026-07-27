@@ -2,6 +2,10 @@ import Link from "next/link";
 
 import { formatAmountMinor } from "@/lib/admin/format";
 import type { AdminOrderListItem } from "@/lib/admin/orders";
+import {
+  formatAdminInvoiceLabel,
+  getInvoiceIssueStatus,
+} from "@/lib/invoices/status";
 import { getTicketBreakdown } from "@/lib/orders/ticket-breakdown";
 import { formatPaymentStatus } from "@/lib/orders/format-payment-status";
 import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
@@ -50,6 +54,14 @@ export function OrdersTable({ orders }: OrdersTableProps) {
       key: "status",
       header: "Status",
       cell: (order) => formatPaymentStatus(order.payment_status),
+    },
+    {
+      key: "invoice",
+      header: "Faktura",
+      cell: (order) => {
+        const invoice = formatAdminInvoiceLabel(getInvoiceIssueStatus(order));
+        return <span title={invoice.title}>{invoice.label}</span>;
+      },
     },
     {
       key: "details",

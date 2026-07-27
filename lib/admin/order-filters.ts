@@ -14,11 +14,21 @@ export const ADMIN_ORDER_FILTER_STATUSES = [
 export type AdminOrderFilterStatus =
   (typeof ADMIN_ORDER_FILTER_STATUSES)[number];
 
+export const ADMIN_INVOICE_FILTER_OPTIONS = [
+  "none",
+  "waiting",
+  "issued",
+] as const;
+
+export type AdminInvoiceFilter =
+  (typeof ADMIN_INVOICE_FILTER_OPTIONS)[number];
+
 export type AdminOrderFilters = {
   search?: string;
   status?: AdminOrderFilterStatus;
   from?: string;
   to?: string;
+  invoice?: AdminInvoiceFilter;
 };
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -40,6 +50,12 @@ function isAdminOrderFilterStatus(
   );
 }
 
+function isAdminInvoiceFilter(value: string): value is AdminInvoiceFilter {
+  return (ADMIN_INVOICE_FILTER_OPTIONS as ReadonlyArray<string>).includes(
+    value,
+  );
+}
+
 export function parseAdminOrderFilters(
   searchParams: Record<string, string | string[] | undefined>,
 ): AdminOrderFilters {
@@ -47,22 +63,32 @@ export function parseAdminOrderFilters(
   const statusRaw = firstParam(searchParams.status)?.trim();
   const fromRaw = firstParam(searchParams.from)?.trim();
   const toRaw = firstParam(searchParams.to)?.trim();
+  const invoiceRaw = firstParam(searchParams.invoice)?.trim();
 
   const status =
     statusRaw && isAdminOrderFilterStatus(statusRaw) ? statusRaw : undefined;
   const from = fromRaw && ISO_DATE_REGEX.test(fromRaw) ? fromRaw : undefined;
   const to = toRaw && ISO_DATE_REGEX.test(toRaw) ? toRaw : undefined;
+  const invoice =
+    invoiceRaw && isAdminInvoiceFilter(invoiceRaw) ? invoiceRaw : undefined;
 
   return {
     search,
     status,
     from,
     to,
+    invoice,
   };
 }
 
 export function hasActiveAdminOrderFilters(filters: AdminOrderFilters): boolean {
-  return Boolean(filters.search || filters.status || filters.from || filters.to);
+  return Boolean(
+    filters.search ||
+      filters.status ||
+      filters.from ||
+      filters.to ||
+      filters.invoice,
+  );
 }
 
 export function formatOrdersFoundCount(count: number): string {

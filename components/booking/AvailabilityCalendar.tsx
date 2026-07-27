@@ -105,6 +105,13 @@ export function AvailabilityCalendar() {
   const [reducedQty, setReducedQty] = useState(0);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [invoiceRequested, setInvoiceRequested] = useState(false);
+  const [invoiceCompanyName, setInvoiceCompanyName] = useState("");
+  const [invoiceNip, setInvoiceNip] = useState("");
+  const [invoiceStreet, setInvoiceStreet] = useState("");
+  const [invoicePostalCode, setInvoicePostalCode] = useState("");
+  const [invoiceCity, setInvoiceCity] = useState("");
+  const [invoiceError, setInvoiceError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
@@ -154,10 +161,18 @@ export function AvailabilityCalendar() {
   const canAddTicket =
     selectedDate !== null && selectedTickets < maxTicketsForSelection;
   const isEmailValid = getEmailError(email) === "";
+  const isInvoiceValid =
+    !invoiceRequested ||
+    (invoiceCompanyName.trim().length > 0 &&
+      /^\d{10}$/.test(invoiceNip.replace(/\s+/g, "")) &&
+      invoiceStreet.trim().length > 0 &&
+      /^\d{2}-\d{3}$/.test(invoicePostalCode.trim()) &&
+      invoiceCity.trim().length > 0);
   const canProceedToPayment =
     selectedDate !== null &&
     selectedTickets > 0 &&
     isEmailValid &&
+    isInvoiceValid &&
     acceptedTerms &&
     acceptedPrivacy;
 
@@ -208,6 +223,34 @@ export function AvailabilityCalendar() {
     setEmailError(getEmailError(email));
   }
 
+  function getInvoiceValidationError(): string {
+    if (!invoiceRequested) {
+      return "";
+    }
+
+    if (!invoiceCompanyName.trim()) {
+      return "Podaj nazwę firmy.";
+    }
+
+    if (!/^\d{10}$/.test(invoiceNip.replace(/\s+/g, ""))) {
+      return "NIP musi składać się z 10 cyfr.";
+    }
+
+    if (!invoiceStreet.trim()) {
+      return "Podaj ulicę.";
+    }
+
+    if (!/^\d{2}-\d{3}$/.test(invoicePostalCode.trim())) {
+      return "Kod pocztowy musi mieć format XX-XXX.";
+    }
+
+    if (!invoiceCity.trim()) {
+      return "Podaj miasto.";
+    }
+
+    return "";
+  }
+
   function handlePaymentAttempt() {
     if (isSubmitting) {
       return;
@@ -216,6 +259,7 @@ export function AvailabilityCalendar() {
     if (canProceedToPayment) {
       setValidationMessage("");
       setEmailError("");
+      setInvoiceError("");
       return;
     }
 
@@ -231,7 +275,15 @@ export function AvailabilityCalendar() {
       return;
     }
 
+    const nextInvoiceError = getInvoiceValidationError();
+    if (nextInvoiceError) {
+      setInvoiceError(nextInvoiceError);
+      setValidationMessage("");
+      return;
+    }
+
     setEmailError("");
+    setInvoiceError("");
     setValidationMessage("Przed przejściem do płatności zaakceptuj regulamin oraz politykę prywatności.");
   }
 
@@ -248,6 +300,7 @@ export function AvailabilityCalendar() {
     setIsSubmitting(true);
     setValidationMessage("");
     setEmailError("");
+    setInvoiceError("");
 
     try {
       const redirectUrl = await startCheckout({
@@ -255,6 +308,16 @@ export function AvailabilityCalendar() {
         email: email.trim(),
         normalQty,
         reducedQty,
+        invoiceRequested,
+        ...(invoiceRequested
+          ? {
+              invoiceCompanyName: invoiceCompanyName.trim(),
+              invoiceNip: invoiceNip.replace(/\s+/g, ""),
+              invoiceStreet: invoiceStreet.trim(),
+              invoicePostalCode: invoicePostalCode.trim(),
+              invoiceCity: invoiceCity.trim(),
+            }
+          : {}),
       });
 
       window.location.assign(redirectUrl);
@@ -437,6 +500,154 @@ export function AvailabilityCalendar() {
               </p>
             ) : null}
           </div>
+        </div>
+
+        <div className="mt-8 border-t border-border pt-5">
+          <h4 className="text-lg font-semibold text-[#1f4d35]">Faktura VAT</h4>
+          <p className="mt-2 text-sm leading-6 text-[#666]">
+            Fakturę VAT można otrzymać wyłącznie po zgłoszeniu takiej potrzeby
+            przed dokonaniem płatności.
+          </p>
+
+          <label className="mt-4 flex gap-3 text-sm leading-6 text-[#666]">
+            <input
+              type="checkbox"
+              checked={invoiceRequested}
+              onChange={(event) => {
+                setInvoiceRequested(event.target.checked);
+                setInvoiceError("");
+                setValidationMessage("");
+              }}
+              disabled={isSubmitting}
+              className="mt-1 h-4 w-4 rounded border-border accent-[#1f4d35]"
+            />
+            <span>Chcę otrzymać fakturę VAT</span>
+          </label>
+
+          {invoiceRequested ? (
+            <div className="mt-4 space-y-4">
+              <div>
+                <label
+                  htmlFor="invoice-company-name"
+                  className="mb-2 block text-sm font-medium text-[#1f4d35]"
+                >
+                  Nazwa firmy
+                </label>
+                <input
+                  id="invoice-company-name"
+                  type="text"
+                  value={invoiceCompanyName}
+                  onChange={(event) => {
+                    setInvoiceCompanyName(event.target.value);
+                    setInvoiceError("");
+                  }}
+                  disabled={isSubmitting}
+                  required={invoiceRequested}
+                  className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition placeholder:text-[#999] focus:border-[#1f4d35]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="invoice-nip"
+                  className="mb-2 block text-sm font-medium text-[#1f4d35]"
+                >
+                  NIP
+                </label>
+                <input
+                  id="invoice-nip"
+                  type="text"
+                  inputMode="numeric"
+                  value={invoiceNip}
+                  onChange={(event) => {
+                    setInvoiceNip(event.target.value);
+                    setInvoiceError("");
+                  }}
+                  disabled={isSubmitting}
+                  required={invoiceRequested}
+                  placeholder="0000000000"
+                  className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition placeholder:text-[#999] focus:border-[#1f4d35]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="invoice-street"
+                  className="mb-2 block text-sm font-medium text-[#1f4d35]"
+                >
+                  Ulica
+                </label>
+                <input
+                  id="invoice-street"
+                  type="text"
+                  value={invoiceStreet}
+                  onChange={(event) => {
+                    setInvoiceStreet(event.target.value);
+                    setInvoiceError("");
+                  }}
+                  disabled={isSubmitting}
+                  required={invoiceRequested}
+                  className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition placeholder:text-[#999] focus:border-[#1f4d35]"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="invoice-postal-code"
+                    className="mb-2 block text-sm font-medium text-[#1f4d35]"
+                  >
+                    Kod pocztowy
+                  </label>
+                  <input
+                    id="invoice-postal-code"
+                    type="text"
+                    value={invoicePostalCode}
+                    onChange={(event) => {
+                      setInvoicePostalCode(event.target.value);
+                      setInvoiceError("");
+                    }}
+                    disabled={isSubmitting}
+                    required={invoiceRequested}
+                    placeholder="00-000"
+                    className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition placeholder:text-[#999] focus:border-[#1f4d35]"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="invoice-city"
+                    className="mb-2 block text-sm font-medium text-[#1f4d35]"
+                  >
+                    Miasto
+                  </label>
+                  <input
+                    id="invoice-city"
+                    type="text"
+                    value={invoiceCity}
+                    onChange={(event) => {
+                      setInvoiceCity(event.target.value);
+                      setInvoiceError("");
+                    }}
+                    disabled={isSubmitting}
+                    required={invoiceRequested}
+                    className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition placeholder:text-[#999] focus:border-[#1f4d35]"
+                  />
+                </div>
+              </div>
+
+              <p className="text-sm leading-6 text-[#666]">
+                Dane do faktury zostaną wykorzystane do wystawienia dokumentu
+                sprzedaży. Po dokonaniu płatności ich zmiana może być niemożliwa.
+              </p>
+
+              {invoiceError ? (
+                <p className="text-sm text-red-600" role="alert">
+                  {invoiceError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-8 border-t border-border pt-5">

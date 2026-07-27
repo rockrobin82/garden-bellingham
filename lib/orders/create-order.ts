@@ -71,6 +71,17 @@ export async function createOrder(
       unit_price_minor: pricing.unitPriceMinor,
       total_amount_minor: pricing.totalAmountMinor,
       payment_status: "pending" as const,
+      invoice_requested: input.invoiceRequested,
+      invoice_company_name: input.invoiceRequested
+        ? input.invoiceCompanyName ?? null
+        : null,
+      invoice_nip: input.invoiceRequested ? input.invoiceNip ?? null : null,
+      invoice_street: input.invoiceRequested ? input.invoiceStreet ?? null : null,
+      invoice_postal_code: input.invoiceRequested
+        ? input.invoicePostalCode ?? null
+        : null,
+      invoice_city: input.invoiceRequested ? input.invoiceCity ?? null : null,
+      invoice_issued: false,
     };
 
     console.log(`${LOG_PREFIX} About to insert order`);

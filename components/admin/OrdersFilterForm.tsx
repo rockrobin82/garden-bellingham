@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import {
+  ADMIN_INVOICE_FILTER_OPTIONS,
   ADMIN_ORDER_FILTER_STATUSES,
   type AdminOrderFilters,
 } from "@/lib/admin/order-filters";
@@ -8,6 +9,15 @@ import { formatPaymentStatus } from "@/lib/orders/format-payment-status";
 
 type OrdersFilterFormProps = {
   filters: AdminOrderFilters;
+};
+
+const INVOICE_FILTER_LABELS: Record<
+  (typeof ADMIN_INVOICE_FILTER_OPTIONS)[number],
+  string
+> = {
+  none: "Brak",
+  waiting: "Oczekuje",
+  issued: "Wystawiona",
 };
 
 export function OrdersFilterForm({ filters }: OrdersFilterFormProps) {
@@ -22,7 +32,7 @@ export function OrdersFilterForm({ filters }: OrdersFilterFormProps) {
           🔍 Filtrowanie zamówień
         </h2>
         <p className="mt-1 text-sm text-[#666]">
-          Szukaj po e-mailu, statusie i dacie wizyty.
+          Szukaj po e-mailu, statusie, fakturze i dacie wizyty.
         </p>
       </div>
 
@@ -66,38 +76,58 @@ export function OrdersFilterForm({ filters }: OrdersFilterFormProps) {
           </select>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:contents">
-          <div>
-            <label
-              htmlFor="admin-orders-from"
-              className="mb-2 block text-sm font-medium text-[#1f4d35]"
-            >
-              Data od
-            </label>
-            <input
-              id="admin-orders-from"
-              type="date"
-              name="from"
-              defaultValue={filters.from ?? ""}
-              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition focus:border-[#1f4d35]"
-            />
-          </div>
+        <div>
+          <label
+            htmlFor="admin-orders-invoice"
+            className="mb-2 block text-sm font-medium text-[#1f4d35]"
+          >
+            Faktura
+          </label>
+          <select
+            id="admin-orders-invoice"
+            name="invoice"
+            defaultValue={filters.invoice ?? ""}
+            className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition focus:border-[#1f4d35]"
+          >
+            <option value="">Wszystkie</option>
+            {ADMIN_INVOICE_FILTER_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {INVOICE_FILTER_LABELS[option]}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          <div>
-            <label
-              htmlFor="admin-orders-to"
-              className="mb-2 block text-sm font-medium text-[#1f4d35]"
-            >
-              Data do
-            </label>
-            <input
-              id="admin-orders-to"
-              type="date"
-              name="to"
-              defaultValue={filters.to ?? ""}
-              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition focus:border-[#1f4d35]"
-            />
-          </div>
+        <div>
+          <label
+            htmlFor="admin-orders-from"
+            className="mb-2 block text-sm font-medium text-[#1f4d35]"
+          >
+            Data od
+          </label>
+          <input
+            id="admin-orders-from"
+            type="date"
+            name="from"
+            defaultValue={filters.from ?? ""}
+            className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition focus:border-[#1f4d35]"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="admin-orders-to"
+            className="mb-2 block text-sm font-medium text-[#1f4d35]"
+          >
+            Data do
+          </label>
+          <input
+            id="admin-orders-to"
+            type="date"
+            name="to"
+            defaultValue={filters.to ?? ""}
+            className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition focus:border-[#1f4d35]"
+          />
         </div>
       </div>
 

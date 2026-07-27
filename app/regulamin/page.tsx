@@ -403,6 +403,17 @@ export default function TermsPage() {
             Kupujący ponosi odpowiedzialność za poprawność danych przekazanych do
             wystawienia faktury.
           </li>
+          <li>
+            Kupujący, który chce otrzymać fakturę VAT, zobowiązany jest zgłosić ten
+            fakt przed dokonaniem płatności poprzez zaznaczenie odpowiedniej opcji
+            w formularzu zamówienia oraz podanie kompletnych i prawidłowych danych
+            niezbędnych do jej wystawienia.
+          </li>
+          <li>
+            Brak zgłoszenia chęci otrzymania faktury VAT przed dokonaniem płatności
+            może uniemożliwić jej późniejsze wystawienie lub skutkować odmową jej
+            wystawienia zgodnie z obowiązującymi przepisami prawa.
+          </li>
         </ol>
       </LegalSection>
 
