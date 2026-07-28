@@ -17,6 +17,7 @@ const envSchema = z.object({
 
   RESEND_API_KEY: z.string().optional(),
   MAIL_FROM: z.string().email().optional(),
+  INVOICE_NOTIFICATION_EMAIL: z.string().email().optional(),
 
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
@@ -48,6 +49,7 @@ function parseEnv(source: NodeJS.ProcessEnv): Env {
     P24_API_BASE_URL: source.P24_API_BASE_URL,
     RESEND_API_KEY: source.RESEND_API_KEY,
     MAIL_FROM: source.MAIL_FROM,
+    INVOICE_NOTIFICATION_EMAIL: source.INVOICE_NOTIFICATION_EMAIL,
     NEXT_PUBLIC_SUPABASE_URL: source.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: source.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: source.SUPABASE_SERVICE_ROLE_KEY,

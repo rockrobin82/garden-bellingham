@@ -13,7 +13,8 @@ import type { CreateOrderRequest, CreateOrderResponse } from "@/types/booking";
 
 const LOG_PREFIX = "[createOrder]";
 
-function logException(error: unknown): void {
+function logException(error: unknown, step: string): void {
+  console.error(`${LOG_PREFIX} Exception at step: ${step}`);
   console.error(`${LOG_PREFIX} Exception:`, error);
 
   if (error instanceof Error && error.stack) {
@@ -27,22 +28,36 @@ export async function createOrder(
   console.log(`${LOG_PREFIX} Creating order started`);
   console.log(`${LOG_PREFIX} Request payload:`, input);
 
+  let step = "start";
+
   try {
-    console.log(`${LOG_PREFIX} Reading Google Sheets`);
+    step = "Reading Google Sheets";
+    console.log(`${LOG_PREFIX} 1. Reading Google Sheets`);
     const rawRows = await readSheetRange(SHEET_TABS.dates, "A:Z");
+
+    step = "Google Sheets loaded";
+    console.log(`${LOG_PREFIX} 2. Google Sheets loaded`);
+
+    step = "Parsed rows count";
     const dateRows = parseDateRows(rawRows);
+    console.log(`${LOG_PREFIX} 3. Parsed rows count:`, dateRows.length);
+
+    step = "Booking row found";
     const dateRow = dateRows.find((row) => row.date === input.bookingDate);
 
     if (!dateRow) {
       throw new BookingDateNotFoundError(input.bookingDate);
     }
 
-    console.log(`${LOG_PREFIX} Booking date found`);
+    console.log(`${LOG_PREFIX} 4. Booking row found`);
     console.log(`${LOG_PREFIX} Parsed booking row:`, dateRow);
 
+    step = "Booking active";
     if (!dateRow.active) {
       throw new BookingDateInactiveError(input.bookingDate);
     }
+
+    console.log(`${LOG_PREFIX} 5. Booking active`);
 
     const ticketQty = input.normalQty + input.reducedQty;
     const remaining = Math.max(0, dateRow.ticket_limit - dateRow.sold_count);
@@ -51,17 +66,23 @@ export async function createOrder(
       throw new InsufficientTicketsError(remaining);
     }
 
+    step = "Pricing calculated";
     const pricing = calculateOrderPricing({
       normalQty: input.normalQty,
       reducedQty: input.reducedQty,
       priceNormalPln: dateRow.price_normal,
       priceReducedPln: dateRow.price_reduced,
     });
+    console.log(`${LOG_PREFIX} 6. Pricing calculated:`, pricing);
 
-    console.log(`${LOG_PREFIX} Creating Supabase admin client`);
+    step = "Creating Supabase client";
+    console.log(`${LOG_PREFIX} 7. Creating Supabase client`);
     const supabase = getSupabaseAdminClient();
-    console.log(`${LOG_PREFIX} Supabase client created`);
 
+    step = "Supabase client created";
+    console.log(`${LOG_PREFIX} 8. Supabase client created`);
+
+    step = "Insert payload ready";
     const insertPayload = {
       booking_date: input.bookingDate,
       customer_email: input.email,
@@ -83,15 +104,19 @@ export async function createOrder(
       invoice_city: input.invoiceRequested ? input.invoiceCity ?? null : null,
       invoice_issued: false,
     };
+    console.log(`${LOG_PREFIX} 9. Insert payload ready:`, insertPayload);
 
-    console.log(`${LOG_PREFIX} About to insert order`);
-    console.log(`${LOG_PREFIX} Full insert payload:`, insertPayload);
+    step = "About to execute insert";
+    console.log(`${LOG_PREFIX} 10. About to execute insert`);
 
     const { data, error } = await supabase
       .from("orders")
       .insert(insertPayload)
       .select("id, payment_status, total_amount_minor")
       .single();
+
+    step = "Insert completed";
+    console.log(`${LOG_PREFIX} 11. Insert completed`);
 
     if (error || !data) {
       console.error(
@@ -103,13 +128,20 @@ export async function createOrder(
       });
     }
 
+    step = "Order created successfully";
+    console.log(`${LOG_PREFIX} 12. Order created successfully:`, {
+      orderId: data.id,
+      status: data.payment_status,
+      totalAmountMinor: data.total_amount_minor,
+    });
+
     return {
       orderId: data.id,
       status: "pending",
       totalAmountMinor: data.total_amount_minor,
     };
   } catch (error) {
-    logException(error);
+    logException(error, step);
     throw error;
   }
 }
