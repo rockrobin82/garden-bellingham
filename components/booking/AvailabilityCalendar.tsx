@@ -5,6 +5,43 @@ import { z } from "zod";
 
 import { startCheckout } from "@/lib/booking/start-checkout";
 
+const CHILD_AGE_OPTIONS = Array.from({ length: 14 }, (_, index) => index + 3);
+
+function formatChildAgeLabel(age: number): string {
+  if (age >= 2 && age <= 4) {
+    return `${age} lata`;
+  }
+
+  return `${age} lat`;
+}
+
+function getChildAgesError(ages: string[], reducedQty: number): string {
+  if (reducedQty <= 0) {
+    return "";
+  }
+
+  for (let index = 0; index < reducedQty; index += 1) {
+    const age = ages[index];
+    if (!age || !CHILD_AGE_OPTIONS.includes(Number(age))) {
+      return "Wybierz wiek każdego dziecka.";
+    }
+  }
+
+  return "";
+}
+
+function chunkChildIndices(count: number, chunkSize: number): number[][] {
+  const rows: number[][] = [];
+
+  for (let index = 0; index < count; index += chunkSize) {
+    rows.push(
+      Array.from({ length: Math.min(chunkSize, count - index) }, (_, offset) => index + offset),
+    );
+  }
+
+  return rows;
+}
+
 const emailSchema = z
   .string()
   .trim()
@@ -103,6 +140,8 @@ export function AvailabilityCalendar() {
   const [selectedDateKey, setSelectedDateKey] = useState("");
   const [normalQty, setNormalQty] = useState(0);
   const [reducedQty, setReducedQty] = useState(0);
+  const [childAges, setChildAges] = useState<string[]>([]);
+  const [childAgesError, setChildAgesError] = useState("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [invoiceRequested, setInvoiceRequested] = useState(false);
@@ -168,11 +207,14 @@ export function AvailabilityCalendar() {
       invoiceStreet.trim().length > 0 &&
       /^\d{2}-\d{3}$/.test(invoicePostalCode.trim()) &&
       invoiceCity.trim().length > 0);
+  const isChildAgesValid =
+    reducedQty === 0 || getChildAgesError(childAges, reducedQty) === "";
   const canProceedToPayment =
     selectedDate !== null &&
     selectedTickets > 0 &&
     isEmailValid &&
     isInvoiceValid &&
+    isChildAgesValid &&
     acceptedTerms &&
     acceptedPrivacy;
 
@@ -185,6 +227,8 @@ export function AvailabilityCalendar() {
     setSelectedDateKey(key);
     setNormalQty(0);
     setReducedQty(0);
+    setChildAges([]);
+    setChildAgesError("");
     setValidationMessage("");
     window.setTimeout(() => {
       summaryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -198,15 +242,40 @@ export function AvailabilityCalendar() {
     const setQuantity = type === "normal" ? setNormalQty : setReducedQty;
 
     if (direction === "decrease") {
-      setQuantity((current) => Math.max(0, current - 1));
+      setQuantity((current) => {
+        const next = Math.max(0, current - 1);
+        if (type === "reduced") {
+          setChildAges((ages) => (next === 0 ? [] : ages.slice(0, next)));
+          if (next === 0) {
+            setChildAgesError("");
+          }
+        }
+        return next;
+      });
       setValidationMessage("");
       return;
     }
 
     if (canAddTicket) {
-      setQuantity((current) => current + 1);
+      setQuantity((current) => {
+        const next = current + 1;
+        if (type === "reduced") {
+          setChildAges((ages) => [...ages, ""]);
+        }
+        return next;
+      });
       setValidationMessage("");
     }
+  }
+
+  function handleChildAgeChange(index: number, value: string) {
+    setChildAges((current) => {
+      const next = [...current];
+      next[index] = value;
+      return next;
+    });
+    setChildAgesError("");
+    setValidationMessage("");
   }
 
   function handleEmailChange(value: string) {
@@ -260,6 +329,7 @@ export function AvailabilityCalendar() {
       setValidationMessage("");
       setEmailError("");
       setInvoiceError("");
+      setChildAgesError("");
       return;
     }
 
@@ -282,8 +352,16 @@ export function AvailabilityCalendar() {
       return;
     }
 
+    const nextChildAgesError = getChildAgesError(childAges, reducedQty);
+    if (nextChildAgesError) {
+      setChildAgesError(nextChildAgesError);
+      setValidationMessage("");
+      return;
+    }
+
     setEmailError("");
     setInvoiceError("");
+    setChildAgesError("");
     setValidationMessage("Przed przejściem do płatności zaakceptuj regulamin oraz politykę prywatności.");
   }
 
@@ -301,6 +379,7 @@ export function AvailabilityCalendar() {
     setValidationMessage("");
     setEmailError("");
     setInvoiceError("");
+    setChildAgesError("");
 
     try {
       const redirectUrl = await startCheckout({
@@ -444,16 +523,108 @@ export function AvailabilityCalendar() {
                 canIncrease={canAddTicket}
                 disabled={isSubmitting}
               />
-              <TicketTypeRow
-                label="Ulgowy"
-                price={selectedDate.priceReduced}
-                quantity={reducedQty}
-                onDecrease={() => updateTicketCount("reduced", "decrease")}
-                onIncrease={() => updateTicketCount("reduced", "increase")}
-                canDecrease={reducedQty > 0}
-                canIncrease={canAddTicket}
-                disabled={isSubmitting}
-              />
+              <div>
+                <TicketTypeRow
+                  label="Ulgowy"
+                  price={selectedDate.priceReduced}
+                  quantity={reducedQty}
+                  onDecrease={() => updateTicketCount("reduced", "decrease")}
+                  onIncrease={() => updateTicketCount("reduced", "increase")}
+                  canDecrease={reducedQty > 0}
+                  canIncrease={canAddTicket}
+                  disabled={isSubmitting}
+                />
+
+                <div
+                  className={[
+                    "grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out",
+                    reducedQty > 0
+                      ? "mt-3 grid-rows-[1fr] opacity-100"
+                      : "mt-0 grid-rows-[0fr] opacity-0",
+                  ].join(" ")}
+                  aria-hidden={reducedQty === 0}
+                >
+                  <div className="overflow-hidden">
+                    <div className="rounded-xl border border-[#d7e8dc] bg-[#f6faf7] p-4">
+                      <div className="space-y-3">
+                        {chunkChildIndices(reducedQty, 4).map((rowIndices, rowIndex) => (
+                          <div
+                            key={`child-age-row-${rowIndex}`}
+                            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                          >
+                            {rowIndices.map((childIndex) => (
+                              <div
+                                key={`child-age-${childIndex}`}
+                                className="min-w-0 transition-opacity duration-300 ease-out"
+                              >
+                                <label
+                                  htmlFor={`child-age-${childIndex}`}
+                                  className="mb-2 block text-sm font-medium text-[#1f4d35]"
+                                >
+                                  Dziecko {childIndex + 1}
+                                </label>
+                                <select
+                                  id={`child-age-${childIndex}`}
+                                  value={childAges[childIndex] ?? ""}
+                                  onChange={(event) =>
+                                    handleChildAgeChange(childIndex, event.target.value)
+                                  }
+                                  disabled={isSubmitting}
+                                  required={reducedQty > 0}
+                                  aria-invalid={childAgesError.length > 0}
+                                  aria-describedby={
+                                    childAgesError
+                                      ? "child-ages-error"
+                                      : "child-ages-helper"
+                                  }
+                                  className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-[#1f4d35] outline-none transition focus:border-[#1f4d35] disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  <option value="" disabled>
+                                    Wybierz wiek
+                                  </option>
+                                  {CHILD_AGE_OPTIONS.map((age) => (
+                                    <option key={age} value={String(age)}>
+                                      {formatChildAgeLabel(age)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+
+                      <p
+                        id="child-ages-helper"
+                        className="mt-4 text-xs leading-5 text-[#666]"
+                      >
+                        Bilet ulgowy przeznaczony jest wyłącznie dla osób uprawnionych
+                        zgodnie z{" "}
+                        <a
+                          href="/regulamin"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-[#1f4d35] underline-offset-4 hover:underline"
+                        >
+                          regulaminem
+                        </a>
+                        . Przy wejściu organizator może poprosić o potwierdzenie prawa do
+                        ulgi.
+                      </p>
+
+                      {childAgesError ? (
+                        <p
+                          id="child-ages-error"
+                          className="mt-2 text-sm text-red-600"
+                          role="alert"
+                        >
+                          {childAgesError}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3 border-t border-border pt-4">
