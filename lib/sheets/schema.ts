@@ -5,6 +5,7 @@
 
 export const SHEET_TABS = {
   dates: "dates",
+  entrySlots: "Wejścia",
   orders: "orders",
 } as const;
 
@@ -26,8 +27,8 @@ export const DATES_COLUMNS = [
 ] as const;
 
 /**
- * Target header of the `dates` tab: one row per entry window.
- * Not applied to the production spreadsheet in this phase.
+ * Header of the `Wejścia` tab: one row per entry window.
+ * Day checkout keeps using `DATES_COLUMNS` on the `dates` tab.
  * `slot_id` is an operator-assigned stable id. It is not derived from the row number or the hours.
  */
 export const ENTRY_SLOT_COLUMNS = [
@@ -87,5 +88,6 @@ export type OrdersColumn = (typeof ORDERS_COLUMNS)[number];
 
 export const SHEET_COLUMNS = {
   [SHEET_TABS.dates]: DATES_COLUMNS,
+  [SHEET_TABS.entrySlots]: ENTRY_SLOT_COLUMNS,
   [SHEET_TABS.orders]: ORDERS_COLUMNS,
 } as const;

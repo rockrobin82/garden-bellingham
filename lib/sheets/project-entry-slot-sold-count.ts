@@ -21,8 +21,11 @@ type AdminClient = SupabaseClient<Database>;
 
 export type EntrySlotSheetDependencies = {
   supabase?: AdminClient;
-  readDateSheet?: () => Promise<string[][]>;
-  writeSoldCount?: (sheetRowNumber: number, soldCount: number) => Promise<void>;
+  readEntrySlotSheet?: () => Promise<string[][]>;
+  writeEntrySlotSoldCount?: (
+    sheetRowNumber: number,
+    soldCount: number,
+  ) => Promise<void>;
 };
 
 function columnIndexToLetter(index: number): string {
@@ -38,11 +41,11 @@ function columnIndexToLetter(index: number): string {
   return letters;
 }
 
-async function defaultReadDateSheet(): Promise<string[][]> {
-  return readSheetRange(SHEET_TABS.dates, "A:Z");
+async function defaultReadEntrySlotSheet(): Promise<string[][]> {
+  return readSheetRange(SHEET_TABS.entrySlots, "A:Z");
 }
 
-async function defaultWriteSoldCount(
+async function defaultWriteEntrySlotSoldCount(
   sheetRowNumber: number,
   soldCount: number,
 ): Promise<void> {
@@ -53,7 +56,7 @@ async function defaultWriteSoldCount(
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: `${SHEET_TABS.dates}!${soldCountColumn}${sheetRowNumber}`,
+    range: `${SHEET_TABS.entrySlots}!${soldCountColumn}${sheetRowNumber}`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [[soldCount]],
@@ -80,9 +83,11 @@ async function writeInventorySoldCount(
   soldQty: number,
   dependencies: EntrySlotSheetDependencies,
 ): Promise<void> {
-  const readDateSheet = dependencies.readDateSheet ?? defaultReadDateSheet;
-  const writeSoldCount = dependencies.writeSoldCount ?? defaultWriteSoldCount;
-  const rows = await readDateSheet();
+  const readEntrySlotSheet =
+    dependencies.readEntrySlotSheet ?? defaultReadEntrySlotSheet;
+  const writeEntrySlotSoldCount =
+    dependencies.writeEntrySlotSoldCount ?? defaultWriteEntrySlotSoldCount;
+  const rows = await readEntrySlotSheet();
   const header = rows[0] ?? [];
 
   if (detectDatesSheetFormat(header) !== DATES_SHEET_FORMAT.entrySlot) {
@@ -101,7 +106,7 @@ async function writeInventorySoldCount(
   }
 
   const sheetRowNumber = findSlotRowNumber(rows, slotId);
-  await writeSoldCount(sheetRowNumber, soldQty);
+  await writeEntrySlotSoldCount(sheetRowNumber, soldQty);
 }
 
 async function readSoldQty(

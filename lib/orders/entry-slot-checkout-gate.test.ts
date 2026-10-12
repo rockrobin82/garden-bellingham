@@ -125,7 +125,7 @@ describe("overlapping entry slots", () => {
               throw new Error("database used");
             },
           } as never,
-          readDateSheet: async () => [header, morning, overlap],
+          readEntrySlotSheet: async () => [header, morning, overlap],
         },
       ),
     ).rejects.toBeInstanceOf(EntrySlotSheetError);

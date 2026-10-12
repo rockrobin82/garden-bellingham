@@ -47,7 +47,7 @@ type StoredOrder = {
 };
 
 export type CreateEntrySlotOrderDependencies = {
-  readDateSheet?: () => Promise<string[][]>;
+  readEntrySlotSheet?: () => Promise<string[][]>;
   supabase?: AdminClient;
   beforeReserve?: () => Promise<void> | void;
 };
@@ -91,7 +91,7 @@ function parseInput(input: CreateEntrySlotOrderRequest): CreateEntrySlotOrderReq
 }
 
 async function defaultDependencies(): Promise<
-  Required<Pick<CreateEntrySlotOrderDependencies, "readDateSheet" | "supabase">>
+  Required<Pick<CreateEntrySlotOrderDependencies, "readEntrySlotSheet" | "supabase">>
 > {
   const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
   const { readSheetRange } = await import("@/lib/sheets/helpers");
@@ -99,19 +99,19 @@ async function defaultDependencies(): Promise<
 
   return {
     supabase: getSupabaseAdminClient(),
-    readDateSheet: () => readSheetRange(SHEET_TABS.dates, "A:Z"),
+    readEntrySlotSheet: () => readSheetRange(SHEET_TABS.entrySlots, "A:Z"),
   };
 }
 
 async function loadSheetSlot(
-  readDateSheet: () => Promise<string[][]>,
+  readEntrySlotSheet: () => Promise<string[][]>,
   entrySlotId: string,
   bookingDate: string,
 ): Promise<EntrySlotRow> {
   let rows: string[][];
 
   try {
-    rows = await readDateSheet();
+    rows = await readEntrySlotSheet();
   } catch (error) {
     console.error(`${LOG_PREFIX} Google Sheets read failed.`, error);
     throw new EntrySlotSheetError();
@@ -402,18 +402,19 @@ export async function createEntrySlotOrder(
 ): Promise<CreateOrderResponse> {
   const parsed = parseInput(input);
   const defaults =
-    dependencies.supabase && dependencies.readDateSheet
+    dependencies.supabase && dependencies.readEntrySlotSheet
       ? null
       : await defaultDependencies();
   const supabase = dependencies.supabase ?? defaults?.supabase;
-  const readDateSheet = dependencies.readDateSheet ?? defaults?.readDateSheet;
+  const readEntrySlotSheet =
+    dependencies.readEntrySlotSheet ?? defaults?.readEntrySlotSheet;
 
-  if (!supabase || !readDateSheet) {
+  if (!supabase || !readEntrySlotSheet) {
     throw new EntrySlotUnavailableError();
   }
 
   const slot = await loadSheetSlot(
-    readDateSheet,
+    readEntrySlotSheet,
     parsed.entrySlotId,
     parsed.bookingDate,
   );

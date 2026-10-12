@@ -161,7 +161,7 @@ async function ageHold(orderId: string): Promise<void> {
 async function createHeldOrder(email: string, idempotencyKey: string): Promise<string> {
   const created = await createEntrySlotOrder(
     request({ email, idempotencyKey }),
-    { supabase, readDateSheet: async () => sheet([morning]) },
+    { supabase, readEntrySlotSheet: async () => sheet([morning]) },
   );
   return created.orderId;
 }
@@ -505,8 +505,8 @@ test("refunds a slot order once and does not decrease the day sheet counter", as
     }) =>
       completeEntrySlotRefund(input, {
         supabase,
-        readDateSheet: async () => rows,
-        writeSoldCount: async (sheetRowNumber, soldCount) => {
+        readEntrySlotSheet: async () => rows,
+        writeEntrySlotSoldCount: async (sheetRowNumber, soldCount) => {
           writes.push(soldCount);
           rows[sheetRowNumber - 1][soldIndex] = String(soldCount);
         },
@@ -559,8 +559,8 @@ test("two concurrent slot refunds release the hold once", async () => {
   };
   const dependencies = {
     supabase,
-    readDateSheet: async () => rows,
-    writeSoldCount: async (sheetRowNumber: number, soldCount: number) => {
+    readEntrySlotSheet: async () => rows,
+    writeEntrySlotSoldCount: async (sheetRowNumber: number, soldCount: number) => {
       rows[sheetRowNumber - 1][soldIndex] = String(soldCount);
     },
   };
@@ -616,8 +616,8 @@ test("records a provider-completed refund without sending it again", async () =>
     }) =>
       completeEntrySlotRefund(input, {
         supabase,
-        readDateSheet: async () => rows,
-        writeSoldCount: async (sheetRowNumber, soldCount) => {
+        readEntrySlotSheet: async () => rows,
+        writeEntrySlotSoldCount: async (sheetRowNumber, soldCount) => {
           writes.push(soldCount);
           rows[sheetRowNumber - 1][soldIndex] = String(soldCount);
         },
@@ -659,8 +659,8 @@ test("keeps seats when release fails and frees them once on the next attempt", a
   };
   const sheetDeps = {
     supabase,
-    readDateSheet: async () => rows,
-    writeSoldCount: async (sheetRowNumber: number, soldCount: number) => {
+    readEntrySlotSheet: async () => rows,
+    writeEntrySlotSoldCount: async (sheetRowNumber: number, soldCount: number) => {
       rows[sheetRowNumber - 1][soldIndex] = String(soldCount);
     },
   };
@@ -708,8 +708,8 @@ test("retries the slot sheet projection without decrementing sold_qty again", as
       },
       {
         supabase,
-        readDateSheet: async () => rows,
-        writeSoldCount: async (sheetRowNumber, soldCount) => {
+        readEntrySlotSheet: async () => rows,
+        writeEntrySlotSoldCount: async (sheetRowNumber, soldCount) => {
           if (failSheet) {
             failSheet = false;
             throw new Error("sheet failed");
@@ -769,8 +769,8 @@ test("projects sold_qty onto the slot row and can repair a drifted cell", async 
   const soldIndex = ENTRY_SLOT_COLUMNS.indexOf("sold_count");
   const sheetDeps = {
     supabase,
-    readDateSheet: async () => rows,
-    writeSoldCount: async (sheetRowNumber: number, soldCount: number) => {
+    readEntrySlotSheet: async () => rows,
+    writeEntrySlotSoldCount: async (sheetRowNumber: number, soldCount: number) => {
       writes.push(soldCount);
       rows[sheetRowNumber - 1][soldIndex] = String(soldCount);
     },
@@ -790,8 +790,8 @@ test("projects sold_qty onto the slot row and can repair a drifted cell", async 
   await expect(
     projectEntrySlotSoldCount(orderId, {
       supabase,
-      readDateSheet: async () => dayRows,
-      writeSoldCount: async (_row, soldCount) => {
+      readEntrySlotSheet: async () => dayRows,
+      writeEntrySlotSoldCount: async (_row, soldCount) => {
         dayWrites.push(soldCount);
       },
     }),

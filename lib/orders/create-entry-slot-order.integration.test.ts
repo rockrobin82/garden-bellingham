@@ -167,7 +167,7 @@ test("creates a slot order from sheet prices and ignores sheet sold_count", asyn
     }),
     {
       supabase,
-      readDateSheet: async () => sheet([morning]),
+      readEntrySlotSheet: async () => sheet([morning]),
     },
   );
 
@@ -206,7 +206,7 @@ test("prices each slot on the same date independently", async () => {
       sold_count: "12",
     },
   ]);
-  const readDateSheet = async () => rows;
+  const readEntrySlotSheet = async () => rows;
 
   const morningOrder = await createEntrySlotOrder(
     request({
@@ -214,7 +214,7 @@ test("prices each slot on the same date independently", async () => {
       idempotencyKey: "phase2b-price-morning",
       entrySlotId: "phase2b-morning",
     }),
-    { supabase, readDateSheet },
+    { supabase, readEntrySlotSheet },
   );
   const afternoonOrder = await createEntrySlotOrder(
     request({
@@ -222,7 +222,7 @@ test("prices each slot on the same date independently", async () => {
       idempotencyKey: "phase2b-price-afternoon",
       entrySlotId: "phase2b-afternoon",
     }),
-    { supabase, readDateSheet },
+    { supabase, readEntrySlotSheet },
   );
 
   expect(morningOrder.totalAmountMinor).toBe(6000);
@@ -234,13 +234,13 @@ test("prices each slot on the same date independently", async () => {
 });
 
 test("rejects a missing slot, a date mismatch, an inactive slot, and too many tickets", async () => {
-  const readDateSheet = async () =>
+  const readEntrySlotSheet = async () =>
     sheet([{ ...morning, active: "FALSE", max_tickets_per_order: "2" }]);
 
   await expect(
     createEntrySlotOrder(
       request({ entrySlotId: "phase2b-missing", idempotencyKey: "phase2b-missing-key" }),
-      { supabase, readDateSheet },
+      { supabase, readEntrySlotSheet },
     ),
   ).rejects.toBeInstanceOf(EntrySlotNotFoundError);
   expect(await inventory("phase2b-missing")).toBeNull();
@@ -251,14 +251,14 @@ test("rejects a missing slot, a date mismatch, an inactive slot, and too many ti
         bookingDate: "2026-10-18",
         idempotencyKey: "phase2b-date-mismatch",
       }),
-      { supabase, readDateSheet },
+      { supabase, readEntrySlotSheet },
     ),
   ).rejects.toBeInstanceOf(EntrySlotDateMismatchError);
 
   await expect(
     createEntrySlotOrder(
       request({ idempotencyKey: "phase2b-inactive-key" }),
-      { supabase, readDateSheet },
+      { supabase, readEntrySlotSheet },
     ),
   ).rejects.toBeInstanceOf(EntrySlotInactiveError);
   expect(await inventory("phase2b-morning")).toMatchObject({ held_qty: 0, active: false });
@@ -275,7 +275,7 @@ test("rejects a missing slot, a date mismatch, an inactive slot, and too many ti
       }),
       {
         supabase,
-        readDateSheet: async () =>
+        readEntrySlotSheet: async () =>
           sheet([{ ...morning, active: "TRUE", max_tickets_per_order: "2" }]),
       },
     ),
@@ -294,7 +294,7 @@ test("rejects a reservation above the postgres capacity without a payable order"
       }),
       {
         supabase,
-        readDateSheet: async () =>
+        readEntrySlotSheet: async () =>
           sheet([{ ...morning, ticket_limit: "2", max_tickets_per_order: "6" }]),
       },
     ),
@@ -307,7 +307,7 @@ test("rejects a reservation above the postgres capacity without a payable order"
 });
 
 test("lets at most one concurrent order take the last seat", async () => {
-  const readDateSheet = async () =>
+  const readEntrySlotSheet = async () =>
     sheet([{ ...morning, ticket_limit: "1", max_tickets_per_order: "1" }]);
   const attempts = await Promise.allSettled([
     createEntrySlotOrder(
@@ -317,7 +317,7 @@ test("lets at most one concurrent order take the last seat", async () => {
         reducedQty: 0,
         idempotencyKey: "phase2b-race-a-key",
       }),
-      { supabase, readDateSheet },
+      { supabase, readEntrySlotSheet },
     ),
     createEntrySlotOrder(
       request({
@@ -326,7 +326,7 @@ test("lets at most one concurrent order take the last seat", async () => {
         reducedQty: 0,
         idempotencyKey: "phase2b-race-b-key",
       }),
-      { supabase, readDateSheet },
+      { supabase, readEntrySlotSheet },
     ),
   ]);
 
@@ -340,7 +340,7 @@ test("lets at most one concurrent order take the last seat", async () => {
 
 test("repeating the same request does not reserve twice or reprice the order", async () => {
   let priceNormal = "35";
-  const readDateSheet = async () => sheet([{ ...morning, price_normal: priceNormal }]);
+  const readEntrySlotSheet = async () => sheet([{ ...morning, price_normal: priceNormal }]);
   const input = request({
     email: "phase2b-retry@example.test",
     normalQty: 2,
@@ -348,9 +348,9 @@ test("repeating the same request does not reserve twice or reprice the order", a
     idempotencyKey: "phase2b-retry-key",
   });
 
-  const first = await createEntrySlotOrder(input, { supabase, readDateSheet });
+  const first = await createEntrySlotOrder(input, { supabase, readEntrySlotSheet });
   priceNormal = "99";
-  const second = await createEntrySlotOrder(input, { supabase, readDateSheet });
+  const second = await createEntrySlotOrder(input, { supabase, readEntrySlotSheet });
 
   expect(second).toEqual(first);
   expect(first.totalAmountMinor).toBe(7000);
@@ -360,7 +360,7 @@ test("repeating the same request does not reserve twice or reprice the order", a
   await expect(
     createEntrySlotOrder(
       { ...input, normalQty: 1 },
-      { supabase, readDateSheet },
+      { supabase, readEntrySlotSheet },
     ),
   ).rejects.toBeInstanceOf(EntrySlotHoldConflictError);
   expect(await inventory("phase2b-morning")).toMatchObject({ held_qty: 2 });
@@ -373,12 +373,12 @@ test("retries a crash between insert and reserve without a second hold", async (
     reducedQty: 0,
     idempotencyKey: "phase2b-crash-key",
   });
-  const readDateSheet = async () => sheet([morning]);
+  const readEntrySlotSheet = async () => sheet([morning]);
 
   await expect(
     createEntrySlotOrder(input, {
       supabase,
-      readDateSheet,
+      readEntrySlotSheet,
       beforeReserve: () => {
         throw new Error("crash before reserve");
       },
@@ -390,7 +390,7 @@ test("retries a crash between insert and reserve without a second hold", async (
     "cancelled",
   );
 
-  const created = await createEntrySlotOrder(input, { supabase, readDateSheet });
+  const created = await createEntrySlotOrder(input, { supabase, readEntrySlotSheet });
   expect(created.status).toBe("pending");
   expect(await ordersFor("phase2b-crash@example.test")).toHaveLength(1);
   expect(await inventory("phase2b-morning")).toMatchObject({ held_qty: 1, sold_qty: 0 });
@@ -400,7 +400,7 @@ test("rejects a sheet failure and a database failure without leaking internals",
   await expect(
     createEntrySlotOrder(request({ idempotencyKey: "phase2b-sheet-key" }), {
       supabase,
-      readDateSheet: async () => {
+      readEntrySlotSheet: async () => {
         throw new Error("https://sheets.googleapis.com/v4/secret-token");
       },
     }),
@@ -430,7 +430,7 @@ test("rejects a sheet failure and a database failure without leaking internals",
     }),
     {
       supabase: deadClient,
-      readDateSheet: async () => sheet([morning]),
+      readEntrySlotSheet: async () => sheet([morning]),
     },
   ).then(
     () => null,
@@ -453,7 +453,7 @@ test("rejects a sheet limit that is below seats already held", async () => {
     }),
     {
       supabase,
-      readDateSheet: async () =>
+      readEntrySlotSheet: async () =>
         sheet([{ ...morning, ticket_limit: "5", max_tickets_per_order: "6" }]),
     },
   );
@@ -468,7 +468,7 @@ test("rejects a sheet limit that is below seats already held", async () => {
       }),
       {
         supabase,
-        readDateSheet: async () =>
+        readEntrySlotSheet: async () =>
           sheet([{ ...morning, ticket_limit: "2", max_tickets_per_order: "6" }]),
       },
     ),
@@ -489,7 +489,7 @@ test("rejects a zero quantity before reserving seats", async () => {
         reducedQty: 0,
         idempotencyKey: "phase2b-zero-order",
       }),
-      { supabase, readDateSheet: async () => sheet([morning]) },
+      { supabase, readEntrySlotSheet: async () => sheet([morning]) },
     ),
   ).rejects.toBeInstanceOf(EntrySlotQuantityError);
   expect(await inventory("phase2b-morning")).toBeNull();

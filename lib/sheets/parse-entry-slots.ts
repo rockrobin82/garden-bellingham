@@ -1,6 +1,7 @@
 import { mapRowToRecord } from "@/lib/sheets/map-row";
 import {
   ENTRY_SLOT_COLUMNS,
+  SHEET_TABS,
   detectDatesSheetFormat,
 } from "@/lib/sheets/schema";
 import type { EntrySlotRow } from "@/types/sheets";
@@ -177,7 +178,7 @@ function parseSlotId(value: string, sheetRowNumber: number): string {
 }
 
 /**
- * Parses the target entry-slot `dates` sheet.
+ * Parses the `Wejścia` sheet.
  * Rows that share a date stay separate. `slot_id` values must be unique.
  * Active windows on the same date must not overlap. Touching endpoints are allowed.
  * One overlap rejects the whole sheet, so no window from that read can be sold.
@@ -198,14 +199,14 @@ export function parseEntrySlotRows(rows: string[][]): EntrySlotRow[] {
   if (rows.length === 0) {
     throw new EntrySlotParseError(
       ENTRY_SLOT_PARSE_ERROR.unexpectedHeader,
-      `Unexpected "dates" header. Expected: ${ENTRY_SLOT_COLUMNS.join(", ")}`,
+      `Unexpected "${SHEET_TABS.entrySlots}" header. Expected: ${ENTRY_SLOT_COLUMNS.join(", ")}`,
     );
   }
 
   if (detectDatesSheetFormat(rows[0]) !== "entry-slot") {
     throw new EntrySlotParseError(
       ENTRY_SLOT_PARSE_ERROR.unexpectedHeader,
-      `Unexpected "dates" header. Expected: ${ENTRY_SLOT_COLUMNS.join(", ")}`,
+      `Unexpected "${SHEET_TABS.entrySlots}" header. Expected: ${ENTRY_SLOT_COLUMNS.join(", ")}`,
     );
   }
 
