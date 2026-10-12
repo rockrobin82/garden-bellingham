@@ -2,9 +2,12 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  esbuild: {
+    jsx: "automatic",
+  },
   test: {
     environment: "node",
-    include: ["lib/**/*.test.ts"],
+    include: ["lib/**/*.test.ts", "components/**/*.test.tsx"],
     // The integration files share one local Postgres and hold a connection for
     // the whole file. Running them together makes connection checkout and row
     // locks exceed the 5s test timeout, and Vitest does not cancel the query

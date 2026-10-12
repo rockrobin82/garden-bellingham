@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
 import { startCheckout } from "@/lib/booking/start-checkout";
+import { EntrySlotPreview } from "@/components/booking/EntrySlotPreview";
 
 const CHILD_AGE_OPTIONS = Array.from({ length: 14 }, (_, index) => index + 3);
 
@@ -155,6 +156,7 @@ export function AvailabilityCalendar() {
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [catalogMode, setCatalogMode] = useState<"day" | "slots">("day");
   const summaryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -433,14 +435,50 @@ export function AvailabilityCalendar() {
 
   return (
     <section className="garden-section p-6 sm:p-8">
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-xl font-semibold text-[#1f4d35]">Ogród otwarty w dniach:</h3>
-        <span className="text-xs text-[#666] sm:text-sm">
-          Ilość dostępnych biletów jest aktualizowana na bieżąco.
-        </span>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-xl font-semibold text-[#1f4d35]">
+          {catalogMode === "day" ? "Ogród otwarty w dniach:" : "Godziny wejścia:"}
+        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-2" role="group" aria-label="Rodzaj biletów">
+            <button
+              type="button"
+              aria-pressed={catalogMode === "day"}
+              onClick={() => setCatalogMode("day")}
+              className={[
+                "rounded-full px-3 py-1 text-xs font-medium",
+                catalogMode === "day"
+                  ? "bg-[#1f4d35] text-white"
+                  : "bg-[#e8f3ec] text-[#1f4d35]",
+              ].join(" ")}
+            >
+              Bilety dzienne
+            </button>
+            <button
+              type="button"
+              aria-pressed={catalogMode === "slots"}
+              onClick={() => setCatalogMode("slots")}
+              className={[
+                "rounded-full px-3 py-1 text-xs font-medium",
+                catalogMode === "slots"
+                  ? "bg-[#1f4d35] text-white"
+                  : "bg-[#e8f3ec] text-[#1f4d35]",
+              ].join(" ")}
+            >
+              Godziny wejścia
+            </button>
+          </div>
+          {catalogMode === "day" ? (
+            <span className="text-xs text-[#666] sm:text-sm">
+              Ilość dostępnych biletów jest aktualizowana na bieżąco.
+            </span>
+          ) : null}
+        </div>
       </div>
 
-      {dates.length === 0 ? (
+      {catalogMode === "slots" ? (
+        <EntrySlotPreview />
+      ) : dates.length === 0 ? (
         <p className="text-sm text-[#666]">Brak terminów do wyświetlenia.</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -502,6 +540,7 @@ export function AvailabilityCalendar() {
         </div>
       )}
 
+      {catalogMode === "day" ? (
       <div ref={summaryRef} className="mt-8 rounded-2xl border border-border bg-white p-5 scroll-mt-6">
         <h4 className="text-lg font-semibold text-[#1f4d35]">Twój wybór</h4>
 
@@ -932,9 +971,10 @@ export function AvailabilityCalendar() {
               W większości przypadków następuje to w ciągu kilku minut.
             </p>
           </div>
+          </div>
         </div>
       </div>
-      </div>
+      ) : null}
     </section>
   );
 }
