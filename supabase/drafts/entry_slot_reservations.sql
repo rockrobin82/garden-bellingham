@@ -1,0 +1,4 @@
+-- Phase 1 draft. The versioned migration is the source of truth:
+--   supabase/migrations/20261011160000_entry_slot_reservations.sql
+--
+-- Do not apply this file. It is kept so the original draft path still resolves.

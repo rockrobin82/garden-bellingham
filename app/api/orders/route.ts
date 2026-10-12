@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 
 import { createOrder } from "@/lib/orders/create-order";
+import { bodyRequestsEntrySlot } from "@/lib/orders/entry-slot-order-request";
 import { OrderRequestError } from "@/lib/orders/errors";
 import { createOrderRequestSchema } from "@/lib/validation/orders";
 import type { CreateOrderResponse } from "@/types/booking";
@@ -63,6 +64,13 @@ export async function POST(request: Request): Promise<Response> {
       body = await request.json();
     } catch {
       return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    if (bodyRequestsEntrySlot(body)) {
+      return Response.json(
+        { error: "Entry slot checkout is not available" },
+        { status: 409 },
+      );
     }
 
     const parsed = createOrderRequestSchema.safeParse(body);

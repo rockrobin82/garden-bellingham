@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { formatAmountMinor, formatDateTime } from "@/lib/admin/format";
 import { formatPaymentStatus } from "@/lib/orders/format-payment-status";
+import { adminPaymentStatusDescription } from "@/lib/orders/payment-status-copy";
+import type { RefundRecoveryState } from "@/lib/payments/refund-recovery";
 import type { PaymentStatus } from "@/types/database";
 
 type AdminOrderRefundPanelProps = {
@@ -16,6 +18,8 @@ type AdminOrderRefundPanelProps = {
   initialRefundedAt: string | null;
   initialRefundAmountMinor: number | null;
   initialRefundId: string | null;
+  refundRecoveryState: RefundRecoveryState | null;
+  refundRecoveryNote: string | null;
 };
 
 type RefundApiResponse = {
@@ -35,6 +39,8 @@ export function AdminOrderRefundPanel({
   initialRefundedAt,
   initialRefundAmountMinor,
   initialRefundId,
+  refundRecoveryState,
+  refundRecoveryNote,
 }: AdminOrderRefundPanelProps) {
   const [paymentStatus, setPaymentStatus] =
     useState<PaymentStatus>(initialPaymentStatus);
@@ -47,8 +53,14 @@ export function AdminOrderRefundPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const canRefund = paymentStatus === "paid";
+  const canRefund = paymentStatus === "paid" || paymentStatus === "review";
   const isRefunded = paymentStatus === "refunded";
+  const checkingRefund =
+    refundRecoveryState === "dispatching" ||
+    refundRecoveryState === "unknown" ||
+    refundRecoveryState === "submitted" ||
+    refundRecoveryState === "pending_at_provider" ||
+    refundRecoveryState === "manual_review";
 
   async function handleRefund() {
     if (isSubmitting) {
@@ -96,6 +108,12 @@ export function AdminOrderRefundPanel({
       <div className="rounded-xl border border-border bg-white p-4">
         <p className="text-sm text-[#666]">Status</p>
         <p className="mt-1 font-medium">{formatPaymentStatus(paymentStatus)}</p>
+        <p className="mt-2 text-sm text-[#666]">
+          {adminPaymentStatusDescription(paymentStatus)}
+        </p>
+        {refundRecoveryNote ? (
+          <p className="mt-2 text-sm text-[#666]">{refundRecoveryNote}</p>
+        ) : null}
       </div>
 
       <section className="garden-section space-y-4 p-6 sm:p-8">
@@ -105,6 +123,12 @@ export function AdminOrderRefundPanel({
             <p className="mt-2 text-sm text-[#666]">
               Zwrot środków przez Przelewy24 dla tego zamówienia.
             </p>
+            {paymentStatus === "review" ? (
+              <p className="mt-2 text-sm text-[#666]">
+                Płatność została pobrana, ale miejsca nie zostały potwierdzone.
+                Zwrot wykonuje operator.
+              </p>
+            ) : null}
           </div>
 
           {canRefund ? (
@@ -116,7 +140,7 @@ export function AdminOrderRefundPanel({
               }}
               className="garden-btn px-4 py-2 text-sm font-medium"
             >
-              💰 Wykonaj zwrot
+              {checkingRefund ? "Sprawdź wynik zwrotu" : "Wykonaj zwrot"}
             </button>
           ) : null}
         </div>
@@ -188,11 +212,19 @@ export function AdminOrderRefundPanel({
               </div>
             </dl>
 
-            <ul className="mt-4 space-y-1 text-sm text-[#666]">
-              <li>✓ bilety zostaną anulowane</li>
-              <li>✓ środki zostaną zwrócone</li>
-              <li>✓ miejsca wrócą do sprzedaży</li>
-            </ul>
+            {checkingRefund ? (
+              <p className="mt-4 text-sm text-[#666]">
+                To sprawdzenie odczyta zapisany wynik zwrotu. Nowy zwrot nie
+                zostanie wysłany, dopóki status poprzedniego żądania jest
+                nieznany albo nadal przetwarzany.
+              </p>
+            ) : (
+              <ul className="mt-4 space-y-1 text-sm text-[#666]">
+                <li>✓ bilety zostaną anulowane</li>
+                <li>✓ środki zostaną zwrócone</li>
+                <li>✓ miejsca wrócą do sprzedaży</li>
+              </ul>
+            )}
 
             {errorMessage ? (
               <p className="mt-4 text-sm text-red-600" role="alert">

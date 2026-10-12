@@ -56,3 +56,30 @@ export class OrderMissingPaymentDataError extends PaymentRequestError {
     this.name = "OrderMissingPaymentDataError";
   }
 }
+
+export class RefundOutcomeUnknownError extends PaymentRequestError {
+  constructor() {
+    super(
+      "Wynik zwrotu w Przelewy24 nie jest potwierdzony. Ponowienie sprawdzi status i nie wyśle drugiego zwrotu, dopóki wynik jest nieznany.",
+      409,
+    );
+    this.name = "RefundOutcomeUnknownError";
+  }
+}
+
+export class RefundRejectedError extends PaymentRequestError {
+  constructor() {
+    super(
+      "Przelewy24 odrzuciło zwrot. Miejsca i liczniki pozostały bez zmian.",
+      409,
+    );
+    this.name = "RefundRejectedError";
+  }
+}
+
+export class RefundInProgressError extends PaymentRequestError {
+  constructor() {
+    super("Zwrot tego zamówienia jest już przetwarzany.", 409);
+    this.name = "RefundInProgressError";
+  }
+}

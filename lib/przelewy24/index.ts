@@ -3,6 +3,7 @@ export { createP24Client, P24Client, type P24ClientOptions } from "@/lib/przelew
 export { registerTransaction } from "@/lib/przelewy24/register";
 export { verifyTransaction } from "@/lib/przelewy24/verify";
 export { refundTransaction } from "@/lib/przelewy24/refund";
+export { getRefundsByOrderId } from "@/lib/przelewy24/refund-by-order-id";
 export {
   signRefundNotification,
   signRefundTransaction,
@@ -14,6 +15,7 @@ export {
 export {
   P24ApiError,
   P24NetworkError,
+  P24RefundRejectedError,
   type P24ApiResponse,
   type P24Currency,
   type RefundNotificationSignParams,

@@ -14,6 +14,15 @@ import {
   getAdminOrderWithTickets,
   type AdminOrderWithTickets,
 } from "@/lib/admin/orders";
+import {
+  adminPaymentStatusDescription,
+  adminTicketsEmptyCopy,
+} from "@/lib/orders/payment-status-copy";
+import { formatPaymentStatus } from "@/lib/orders/format-payment-status";
+import {
+  adminRefundRecoveryNote,
+  readRefundRecovery,
+} from "@/lib/payments/refund-recovery";
 import { getTicketBreakdown } from "@/lib/orders/ticket-breakdown";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +72,8 @@ export default async function AdminOrderDetailsPage({ params }: PageProps) {
 
   const { order, tickets } = result;
   const breakdown = getTicketBreakdown(order);
+  const refundRecovery = readRefundRecovery(order.payment_metadata);
+  const emptyTickets = adminTicketsEmptyCopy(order.payment_status);
 
   return (
     <div className="space-y-6">
@@ -86,6 +97,16 @@ export default async function AdminOrderDetailsPage({ params }: PageProps) {
             value={order.p24_session_id ?? "—"}
             mono
           />
+          <DetailItem
+            label="Payment status"
+            value={formatPaymentStatus(order.payment_status)}
+          />
+          <div className="rounded-xl border border-border bg-white p-4 sm:col-span-2">
+            <p className="text-sm text-[#666]">Co oznacza status</p>
+            <p className="mt-1 text-sm leading-6 text-[#666]">
+              {adminPaymentStatusDescription(order.payment_status)}
+            </p>
+          </div>
           <DetailItem label="Email" value={order.customer_email} />
           <DetailItem label="Booking date" value={order.booking_date} />
           <DetailItem label="Normal tickets" value={String(breakdown.normalQty)} />
@@ -139,6 +160,8 @@ export default async function AdminOrderDetailsPage({ params }: PageProps) {
         initialRefundedAt={order.refunded_at}
         initialRefundAmountMinor={order.refund_amount_minor}
         initialRefundId={order.refund_id}
+        refundRecoveryState={refundRecovery?.state ?? null}
+        refundRecoveryNote={adminRefundRecoveryNote(refundRecovery)}
       />
 
       <section className="space-y-4">
@@ -151,8 +174,8 @@ export default async function AdminOrderDetailsPage({ params }: PageProps) {
 
         {tickets.length === 0 ? (
           <AdminEmptyState
-            title="Brak biletów"
-            description="Dla tego zamówienia nie wygenerowano jeszcze biletów."
+            title={emptyTickets.title}
+            description={emptyTickets.description}
           />
         ) : (
           <TicketsTable tickets={tickets} />

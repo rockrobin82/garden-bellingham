@@ -2,10 +2,13 @@ import "server-only";
 
 import { getEnv } from "@/lib/config/env";
 import { getGoogleSheetsClient } from "@/lib/sheets/client";
+import { mapRowToRecord } from "@/lib/sheets/map-row";
 import type { SheetTab } from "@/lib/sheets/schema";
 import { SHEET_COLUMNS } from "@/lib/sheets/schema";
 import { parsePaymentStatus } from "@/lib/validation/payment";
 import type { DateRow, OrderRow } from "@/types/sheets";
+
+export { mapRowToRecord } from "@/lib/sheets/map-row";
 
 type SheetRowValues = (string | number | boolean)[];
 
@@ -52,22 +55,6 @@ export async function appendSheetRow(
   });
 }
 
-/**
- * Maps a header row + data row into a keyed object using column order.
- */
-export function mapRowToRecord<T extends string>(
-  headers: readonly T[],
-  row: string[],
-): Record<T, string> {
-  const record = {} as Record<T, string>;
-
-  headers.forEach((header, index) => {
-    record[header] = row[index] ?? "";
-  });
-
-  return record;
-}
-
 function parseBoolean(value: string): boolean {
   const normalized = value.trim().toLowerCase();
   return normalized === "true" || normalized === "1" || normalized === "yes";
@@ -98,15 +85,11 @@ export function parseDateRows(rows: string[][]): DateRow[] {
     );
   }
 
-  console.log("HEADERS:", headers);
-  console.log("ROWS:", dataRows);
-  
   return dataRows
     .filter((row) => row.some((cell) => String(cell).trim() !== ""))
     .map((row) => {
       const record = mapRowToRecord(headers, row);
-      console.log("RECORD:", record);
-      
+
       return {
         date: record.date,
         active: parseBoolean(record.active),

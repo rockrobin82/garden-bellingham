@@ -23,6 +23,14 @@ export type CreateOrderRequest = {
   reducedQty: number;
 } & OrderInvoicePayload;
 
+/**
+ * Prepared entry-slot order. The public checkout route does not accept this yet.
+ */
+export type CreateEntrySlotOrderRequest = CreateOrderRequest & {
+  entrySlotId: string;
+  idempotencyKey: string;
+};
+
 export type CreateOrderResponse = {
   orderId: string;
   status: "pending";

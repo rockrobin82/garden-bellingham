@@ -16,6 +16,24 @@ export type DateRow = {
 };
 
 /**
+ * One entry window from the target `dates` sheet format.
+ * Several rows may share `date`. They stay separate records, keyed by `slot_id`.
+ */
+export type EntrySlotRow = {
+  slot_id: string;
+  date: string;
+  time_start: string;
+  time_end: string;
+  active: boolean;
+  ticket_limit: number;
+  sold_count: number;
+  price_normal: number;
+  price_reduced: number;
+  note: string;
+  max_tickets_per_order: number;
+};
+
+/**
  * Row from the `orders` sheet tab.
  * Column names match the spreadsheet header row.
  */

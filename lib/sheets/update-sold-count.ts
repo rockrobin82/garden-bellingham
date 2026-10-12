@@ -7,6 +7,8 @@ import {
   readSheetRange,
 } from "@/lib/sheets/helpers";
 import { SHEET_COLUMNS, SHEET_TABS } from "@/lib/sheets/schema";
+import { reconcileDaySoldCount } from "@/lib/sheets/reconcile-day-sold-count";
+import type { DaySoldCountDependencies } from "@/lib/sheets/reconcile-day-sold-count";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 function toA1Range(range: string): string {
@@ -74,15 +76,18 @@ function findDateSheetRow(
 }
 
 /**
- * Increments sold_count in the dates sheet for a paid order.
- * Idempotent via orders.sheet_synced_at.
+ * Records a paid day order in the dates sheet.
+ * The sheet receives one absolute sold_count for the date. A retry does not add the same tickets again.
  */
-export async function updateSoldCountForOrder(orderId: string): Promise<void> {
-  const supabase = getSupabaseAdminClient();
+export async function updateSoldCountForOrder(
+  orderId: string,
+  dependencies: DaySoldCountDependencies = {},
+): Promise<void> {
+  const supabase = dependencies.supabase ?? getSupabaseAdminClient();
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .select(
-      "id, booking_date, ticket_qty, payment_status, sheet_synced_at",
+      "id, booking_date, ticket_qty, payment_status, sheet_synced_at, day_sheet_qty, entry_slot_id",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -99,56 +104,49 @@ export async function updateSoldCountForOrder(orderId: string): Promise<void> {
     return;
   }
 
-  if (order.sheet_synced_at) {
+  if (order.entry_slot_id) {
+    const { projectEntrySlotSoldCount } = await import(
+      "@/lib/sheets/project-entry-slot-sold-count"
+    );
+    await projectEntrySlotSoldCount(orderId);
     return;
   }
 
-  const rawRows = await readSheetRange(SHEET_TABS.dates, "A:Z");
-  const dateRow = findDateSheetRow(rawRows, order.booking_date);
+  if (order.sheet_synced_at) {
+    if (order.day_sheet_qty == null) {
+      const { error: markerError } = await supabase
+        .from("orders")
+        .update({ day_sheet_qty: order.ticket_qty })
+        .eq("id", orderId)
+        .is("day_sheet_qty", null);
 
-  if (!dateRow) {
-    throw new Error(
-      `Booking date not found in Google Sheets: ${order.booking_date}`,
-    );
+      if (markerError) {
+        throw new Error("Day sheet contribution could not be recorded");
+      }
+    }
+
+    return;
   }
 
-  const newSoldCount = dateRow.soldCount + order.ticket_qty;
-  const soldCountColumnIndex = SHEET_COLUMNS.dates.indexOf("sold_count");
-  const soldCountColumn = columnIndexToLetter(soldCountColumnIndex);
-  const cellRange = toA1Range(`${soldCountColumn}${dateRow.sheetRowNumber}`);
-
-  const env = getEnv();
-  const sheets = getGoogleSheetsClient();
-
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: env.GOOGLE_SHEETS_SPREADSHEET_ID,
-    range: cellRange,
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [[newSoldCount]],
-    },
+  await reconcileDaySoldCount(order.booking_date, {
+    supabase,
+    readDateSheet: dependencies.readDateSheet,
+    writeSoldCount: dependencies.writeSoldCount,
   });
-
-  const { error: syncError } = await supabase
-    .from("orders")
-    .update({ sheet_synced_at: new Date().toISOString() })
-    .eq("id", orderId)
-    .is("sheet_synced_at", null);
-
-  if (syncError) {
-    throw new Error(syncError.message);
-  }
 }
 
 /**
  * Decreases sold_count in the dates sheet after a successful refund.
  * Does not roll back the refund on failure — caller should log and continue.
  */
-export async function decreaseSoldCountForOrder(orderId: string): Promise<void> {
-  const supabase = getSupabaseAdminClient();
+export async function decreaseSoldCountForOrder(
+  orderId: string,
+  supabaseClient?: ReturnType<typeof getSupabaseAdminClient>,
+): Promise<void> {
+  const supabase = supabaseClient ?? getSupabaseAdminClient();
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .select("id, booking_date, ticket_qty")
+    .select("id, booking_date, ticket_qty, entry_slot_id")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -158,6 +156,10 @@ export async function decreaseSoldCountForOrder(orderId: string): Promise<void> 
 
   if (!order) {
     throw new Error(`Order not found: ${orderId}`);
+  }
+
+  if (order.entry_slot_id) {
+    throw new Error("Refusing to decrease day sold_count for an entry-slot order");
   }
 
   const rawRows = await readSheetRange(SHEET_TABS.dates, "A:Z");

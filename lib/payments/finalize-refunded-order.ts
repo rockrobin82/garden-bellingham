@@ -15,11 +15,12 @@ export type FinalizeRefundedOrderInput = {
 /**
  * Marks order as refunded and cancels all tickets.
  * Must only be called after Przelewy24 accepted the refund.
+ * Returns false when another process already saved the refund.
  */
 export async function finalizeRefundedOrder(
   input: FinalizeRefundedOrderInput,
-): Promise<void> {
-  const supabase = getSupabaseAdminClient();
+  supabase = getSupabaseAdminClient(),
+): Promise<boolean> {
 
   const { data: updatedOrder, error: orderError } = await supabase
     .from("orders")
@@ -31,7 +32,7 @@ export async function finalizeRefundedOrder(
       refund_id: input.refundId,
     })
     .eq("id", input.orderId)
-    .eq("payment_status", "paid")
+    .in("payment_status", ["paid", "review"])
     .select("id")
     .maybeSingle();
 
@@ -55,12 +56,23 @@ export async function finalizeRefundedOrder(
     if (currentOrder?.payment_status !== "refunded") {
       throw new Error(`Failed to mark order as refunded: ${input.orderId}`);
     }
+
+    await cancelTickets(supabase, input.orderId);
+    return false;
   }
 
+  await cancelTickets(supabase, input.orderId);
+  return true;
+}
+
+async function cancelTickets(
+  supabase: ReturnType<typeof getSupabaseAdminClient>,
+  orderId: string,
+): Promise<void> {
   const { error: ticketsError } = await supabase
     .from("tickets")
     .update({ status: "cancelled" })
-    .eq("order_id", input.orderId);
+    .eq("order_id", orderId);
 
   if (ticketsError) {
     console.error(`${LOG_PREFIX} Supabase tickets update failed.`, ticketsError);

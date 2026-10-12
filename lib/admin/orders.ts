@@ -49,6 +49,7 @@ export type AdminOrderDetails = Pick<
   | "invoice_city"
   | "invoice_issued"
   | "invoice_issued_at"
+  | "payment_metadata"
 >;
 
 export type AdminTicketItem = Pick<
@@ -65,7 +66,7 @@ const LIST_SELECT =
   "id, booking_date, customer_email, ticket_qty, normal_qty, reduced_qty, total_amount_minor, payment_status, created_at, invoice_requested, invoice_issued" as const;
 
 const DETAILS_SELECT =
-  "id, booking_date, customer_email, ticket_qty, normal_qty, reduced_qty, total_amount_minor, payment_status, p24_session_id, created_at, paid_at, email_sent_at, sheet_synced_at, refunded_at, refund_id, refund_amount_minor, refund_reason, invoice_requested, invoice_company_name, invoice_nip, invoice_street, invoice_postal_code, invoice_city, invoice_issued, invoice_issued_at" as const;
+  "id, booking_date, customer_email, ticket_qty, normal_qty, reduced_qty, total_amount_minor, payment_status, p24_session_id, created_at, paid_at, email_sent_at, sheet_synced_at, refunded_at, refund_id, refund_amount_minor, refund_reason, invoice_requested, invoice_company_name, invoice_nip, invoice_street, invoice_postal_code, invoice_city, invoice_issued, invoice_issued_at, payment_metadata" as const;
 
 const TICKET_SELECT = "ticket_code, status, used_at" as const;
 

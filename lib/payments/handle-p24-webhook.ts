@@ -8,6 +8,7 @@ import {
   OrderNotPayableError,
   PaymentAmountMismatchError,
 } from "@/lib/payments/errors";
+import { applyVerifiedEntrySlotPayment } from "@/lib/payments/apply-verified-entry-slot-payment";
 import { finalizePaidOrder } from "@/lib/payments/finalize-paid-order";
 import {
   createP24Client,
@@ -24,10 +25,11 @@ type OrderForWebhook = {
   payment_status: PaymentStatus;
   total_amount_minor: number;
   p24_order_id: string | null;
+  entry_slot_id: string | null;
 };
 
 const ORDER_SELECT =
-  "id, payment_status, total_amount_minor, p24_order_id" as const;
+  "id, payment_status, total_amount_minor, p24_order_id, entry_slot_id" as const;
 
 function secureCompare(expected: string, received: string): boolean {
   if (expected.length !== received.length) {
@@ -121,6 +123,11 @@ export async function handleP24WebhookNotification(
     throw new OrderNotFoundError(notification.sessionId);
   }
 
+  if (order.entry_slot_id) {
+    await settleEntrySlotNotification(order, notification, config);
+    return;
+  }
+
   if (order.payment_status === "paid") {
     await finalizePaidOrder(order.id);
     return;
@@ -181,4 +188,67 @@ export async function handleP24WebhookNotification(
   }
 
   await finalizePaidOrder(order.id);
+}
+
+export function entrySlotNotificationDisposition(
+  status: PaymentStatus,
+): "acknowledge" | "fulfill" | "verify" | "reject" {
+  if (status === "review" || status === "refunded") {
+    return "acknowledge";
+  }
+
+  if (status === "paid") {
+    return "fulfill";
+  }
+
+  if (status === "pending" || status === "cancelled" || status === "failed") {
+    return "verify";
+  }
+
+  return "reject";
+}
+
+async function settleEntrySlotNotification(
+  order: OrderForWebhook,
+  notification: TransactionNotificationPayload,
+  config: ReturnType<typeof getP24Config>,
+): Promise<void> {
+  const disposition = entrySlotNotificationDisposition(order.payment_status);
+
+  if (disposition === "acknowledge") {
+    return;
+  }
+
+  if (disposition === "fulfill") {
+    await applyVerifiedEntrySlotPayment({
+      orderId: order.id,
+      p24OrderId: order.p24_order_id ?? String(notification.orderId),
+      p24SessionId: notification.sessionId,
+      amountMinor: order.total_amount_minor,
+    });
+    return;
+  }
+
+  if (disposition === "reject") {
+    throw new OrderNotPayableError(order.id);
+  }
+
+  if (order.total_amount_minor !== notification.amount) {
+    throw new PaymentAmountMismatchError();
+  }
+
+  const client = createP24Client(config);
+  await verifyTransaction(client, config, {
+    sessionId: notification.sessionId,
+    orderId: notification.orderId,
+    amount: notification.amount,
+    currency: notification.currency,
+  });
+
+  await applyVerifiedEntrySlotPayment({
+    orderId: order.id,
+    p24OrderId: String(notification.orderId),
+    p24SessionId: notification.sessionId,
+    amountMinor: notification.amount,
+  });
 }

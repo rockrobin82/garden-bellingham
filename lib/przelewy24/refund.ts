@@ -5,6 +5,7 @@ import type { P24Config } from "@/lib/przelewy24/config";
 import { signRefundTransaction } from "@/lib/przelewy24/sign";
 import {
   P24ApiError,
+  P24RefundRejectedError,
   type P24Currency,
   type RefundTransactionInput,
   type RefundTransactionRequest,
@@ -51,9 +52,8 @@ export async function refundTransaction(
 
   const rejected = items.find((item) => item.status !== true);
   if (rejected) {
-    throw new P24ApiError(
+    throw new P24RefundRejectedError(
       rejected.message ?? "Przelewy24 rejected the refund request",
-      { statusCode: 502 },
     );
   }
 

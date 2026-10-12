@@ -193,3 +193,14 @@ export class P24NetworkError extends Error {
     this.name = "P24NetworkError";
   }
 }
+
+/**
+ * Przelewy24 parsed a refund batch and marked an item as unsuccessful.
+ * This is a definite rejection of that attempt, distinct from a timeout.
+ */
+export class P24RefundRejectedError extends P24ApiError {
+  constructor(message: string) {
+    super(message, { statusCode: 409 });
+    this.name = "P24RefundRejectedError";
+  }
+}

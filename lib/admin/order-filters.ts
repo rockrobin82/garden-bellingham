@@ -7,6 +7,7 @@ import type { PaymentStatus } from "@/types/database";
 export const ADMIN_ORDER_FILTER_STATUSES = [
   "pending",
   "paid",
+  "review",
   "refunded",
   "cancelled",
 ] as const satisfies ReadonlyArray<PaymentStatus>;

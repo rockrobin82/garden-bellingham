@@ -12,6 +12,8 @@ export function formatPaymentStatus(status: PaymentStatus): string {
       return "Anulowane";
     case "refunded":
       return "Zwrócone";
+    case "review":
+      return "Wymaga weryfikacji";
     default:
       return status;
   }

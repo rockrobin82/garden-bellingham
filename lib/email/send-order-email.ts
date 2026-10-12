@@ -1,17 +1,46 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { buildOrderEmailContent } from "@/lib/email/build-order-email";
 import { getMailFromAddress, getResendClient } from "@/lib/email/client";
 import { getOrderPageUrl } from "@/lib/orders/get-order-with-tickets";
 import { getTicketBreakdown } from "@/lib/orders/ticket-breakdown";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/types/database";
+
+type OrderConfirmationEmail = {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  attachments?: Array<{ filename: string; content: Buffer }>;
+};
+
+export type SendOrderEmailDependencies = {
+  supabase?: SupabaseClient<Database>;
+  fromAddress?: string;
+  sendEmail?: (
+    payload: OrderConfirmationEmail,
+    options: { idempotencyKey: string },
+  ) => Promise<{ error: { message: string } | null }>;
+};
 
 /**
- * Sends the order confirmation email after successful payment.
- * Idempotent: skips when email_sent_at is already set.
+ * Sends the order confirmation after a successful payment.
+ *
+ * Skips when email_sent_at is already stored. Otherwise sends with a stable
+ * Resend idempotency key for this order. Resend keeps that key for 24 hours
+ * and does not promise delivery exactly once after the key expires, or when
+ * a second request with the same key is still in flight. email_sent_at is
+ * stored only after Resend accepts the send.
  */
-export async function sendOrderEmail(orderId: string): Promise<void> {
-  const supabase = getSupabaseAdminClient();
+export async function sendOrderEmail(
+  orderId: string,
+  dependencies: SendOrderEmailDependencies = {},
+): Promise<void> {
+  const supabase = dependencies.supabase ?? getSupabaseAdminClient();
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .select(
@@ -47,9 +76,8 @@ export async function sendOrderEmail(orderId: string): Promise<void> {
     orderPageUrl: getOrderPageUrl(order.id),
   });
 
-  const resend = getResendClient();
-  const { error: sendError } = await resend.emails.send({
-    from: getMailFromAddress(),
+  const payload: OrderConfirmationEmail = {
+    from: dependencies.fromAddress ?? getMailFromAddress(),
     to: order.customer_email,
     subject: emailContent.subject,
     html: emailContent.html,
@@ -58,7 +86,11 @@ export async function sendOrderEmail(orderId: string): Promise<void> {
       filename: attachment.filename,
       content: attachment.content,
     })),
-  });
+  };
+  const idempotencyKey = `order-confirmation/${orderId}`;
+  const { error: sendError } = dependencies.sendEmail
+    ? await dependencies.sendEmail(payload, { idempotencyKey })
+    : await getResendClient().emails.send(payload, { idempotencyKey });
 
   if (sendError) {
     throw new Error(sendError.message);

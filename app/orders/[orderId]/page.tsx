@@ -8,6 +8,7 @@ import {
   getOrderWithTickets,
   getTicketQrImagePath,
 } from "@/lib/orders/get-order-with-tickets";
+import { customerOrderTicketSection } from "@/lib/orders/payment-status-copy";
 import { getTicketBreakdown } from "@/lib/orders/ticket-breakdown";
 
 export const dynamic = "force-dynamic";
@@ -53,6 +54,10 @@ export default async function OrderPage({ params }: PageProps) {
 
   const { order, tickets } = result;
   const ticketBreakdown = getTicketBreakdown(order);
+  const ticketSection = customerOrderTicketSection(
+    order.payment_status,
+    tickets.length,
+  );
 
   return (
     <main className="bg-white px-6 py-10 text-[#1f4d35] sm:px-10 sm:py-14">
@@ -93,41 +98,68 @@ export default async function OrderPage({ params }: PageProps) {
         </section>
 
         <section className="space-y-4">
-          <div>
-            <h2 className="text-xl font-semibold">Twoje bilety</h2>
-            <p className="mt-2 text-sm leading-6 text-[#666]">
-              Pokaż kod QR przy wejściu do ogrodu.
-            </p>
-          </div>
-
-          {tickets.length === 0 ? (
-            <div className="garden-section p-6 text-sm text-[#666]">
-              Bilety są w trakcie przygotowania. Odśwież stronę za chwilę.
+          {ticketSection.kind === "review" ? (
+            <div className="garden-section p-6 text-sm leading-6 text-[#666]">
+              <h2 className="text-xl font-semibold text-[#1f4d35]">
+                {ticketSection.heading}
+              </h2>
+              <p className="mt-3">{ticketSection.body}</p>
+              <p className="mt-3">
+                <a
+                  href={`mailto:${ticketSection.email}`}
+                  className="font-medium text-[#1f4d35] underline-offset-4 hover:underline"
+                >
+                  {ticketSection.email}
+                </a>
+              </p>
+              <p className="mt-3">
+                <Link
+                  href={ticketSection.contactPath}
+                  className="font-medium text-[#1f4d35] underline-offset-4 hover:underline"
+                >
+                  Kontakt
+                </Link>
+              </p>
             </div>
           ) : (
-            <div className="grid gap-4">
-              {tickets.map((ticket, index) => (
-                <article
-                  key={ticket.ticket_code}
-                  className="garden-section flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="text-sm text-[#666]">Bilet {index + 1}</p>
-                    <p className="mt-1 font-mono text-sm font-medium break-all">
-                      {ticket.ticket_code}
-                    </p>
-                  </div>
+            <>
+              <div>
+                <h2 className="text-xl font-semibold">Twoje bilety</h2>
+                <p className="mt-2 text-sm leading-6 text-[#666]">
+                  Pokaż kod QR przy wejściu do ogrodu.
+                </p>
+              </div>
 
-                  <img
-                    src={getTicketQrImagePath(ticket.ticket_code)}
-                    alt={`Kod QR biletu ${index + 1}`}
-                    width={160}
-                    height={160}
-                    className="h-40 w-40 rounded-xl border border-border bg-white p-2"
-                  />
-                </article>
-              ))}
-            </div>
+              {ticketSection.kind === "empty" ? (
+                <div className="garden-section p-6 text-sm text-[#666]">
+                  {ticketSection.message}
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {tickets.map((ticket, index) => (
+                    <article
+                      key={ticket.ticket_code}
+                      className="garden-section flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="text-sm text-[#666]">Bilet {index + 1}</p>
+                        <p className="mt-1 font-mono text-sm font-medium break-all">
+                          {ticket.ticket_code}
+                        </p>
+                      </div>
+
+                      <img
+                        src={getTicketQrImagePath(ticket.ticket_code)}
+                        alt={`Kod QR biletu ${index + 1}`}
+                        width={160}
+                        height={160}
+                        className="h-40 w-40 rounded-xl border border-border bg-white p-2"
+                      />
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
 

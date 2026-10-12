@@ -1,0 +1,30 @@
+-- Do not run this file in the Supabase SQL Editor.
+--
+-- The editor shows only the last result set of a multi-statement script.
+-- The previous version ended with the ticket-anomaly count, so that was the
+-- only table displayed. The earlier SELECTs did run inside the read-only
+-- transaction; their grids were discarded by the editor.
+--
+-- Run each file below on its own, in order. Each file is one SELECT.
+-- Stop before 06 if 03 does not show a schema_migrations table.
+-- Stop before 06 if 04 does not show orders. Use 06b instead of 06 when 03
+-- has version and does not have name. Run 13 only when 02 shows
+-- day_sold_count_sync as non-null.
+--
+-- 01_session.sql
+-- 02_objects.sql
+-- 03_migration_columns.sql
+-- 04_order_columns.sql
+-- 05_rls.sql
+-- 06_migration_history.sql
+-- 06b_migration_history_version_only.sql
+-- 07_table_privileges.sql
+-- 08_default_privileges.sql
+-- 09_function_execute.sql
+-- 10_payment_status_counts.sql
+-- 11_order_counts.sql
+-- 12_ticket_anomalies.sql
+-- 13_day_sold_count_sync.sql
+--
+-- The files live in scripts/diagnostics/production-read-only-audit/.
+-- Every one of them is a single read-only SELECT. None of them writes.

@@ -1,15 +1,21 @@
 import "server-only";
 
 import { calculateOrderPricing } from "@/lib/orders/calculate-order-pricing";
+import { createEntrySlotOrder } from "@/lib/orders/create-entry-slot-order";
 import {
   BookingDateInactiveError,
   BookingDateNotFoundError,
   InsufficientTicketsError,
 } from "@/lib/orders/errors";
+import { isEntrySlotOrderRequest } from "@/lib/orders/entry-slot-order-request";
 import { readSheetRange, parseDateRows } from "@/lib/sheets/helpers";
 import { SHEET_TABS } from "@/lib/sheets/schema";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { CreateOrderRequest, CreateOrderResponse } from "@/types/booking";
+import type {
+  CreateEntrySlotOrderRequest,
+  CreateOrderRequest,
+  CreateOrderResponse,
+} from "@/types/booking";
 
 const LOG_PREFIX = "[createOrder]";
 
@@ -23,8 +29,12 @@ function logException(error: unknown, step: string): void {
 }
 
 export async function createOrder(
-  input: CreateOrderRequest,
+  input: CreateOrderRequest | CreateEntrySlotOrderRequest,
 ): Promise<CreateOrderResponse> {
+  if (isEntrySlotOrderRequest(input)) {
+    return createEntrySlotOrder(input);
+  }
+
   console.log(`${LOG_PREFIX} Creating order started`);
   console.log(`${LOG_PREFIX} Request payload:`, input);
 
