@@ -436,9 +436,7 @@ export function AvailabilityCalendar() {
   return (
     <section className="garden-section p-6 sm:p-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-xl font-semibold text-[#1f4d35]">
-          {catalogMode === "day" ? "Ogród otwarty w dniach:" : "Godziny wejścia:"}
-        </h3>
+        <h3 className="text-xl font-semibold text-[#1f4d35]">Ogród otwarty w dniach:</h3>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-2" role="group" aria-label="Rodzaj biletów">
             <button

@@ -259,6 +259,74 @@ describe("daily calendar", () => {
     expect(urls).toContain("/api/availability/slots");
     expect(urls.some((url) => url.includes("/api/orders") || url.includes("payment"))).toBe(false);
   });
+
+  it("does not render a second entry-hours block outside the calendar", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+
+        if (url === "/api/availability") {
+          return jsonResponse({
+            dates: [
+              {
+                date: "2026-10-17",
+                active: true,
+                remaining: 12,
+                priceNormal: 35,
+                priceReduced: 25,
+                soldOut: false,
+                maxTicketsPerOrder: 6,
+              },
+            ],
+          });
+        }
+
+        if (url === "/api/availability/slots") {
+          return jsonResponse({
+            slots: [
+              slot(),
+              slot({
+                slotId: "evening",
+                timeStart: "16:00",
+                timeEnd: "20:00",
+                note: "",
+              }),
+            ],
+          });
+        }
+
+        throw new Error(`unexpected ${url}`);
+      }),
+    );
+
+    render(<AvailabilityCalendar />);
+
+    const heading = await screen.findByRole("heading", { name: "Ogród otwarty w dniach:" });
+    expect(screen.getAllByRole("heading", { name: "Ogród otwarty w dniach:" })).toHaveLength(1);
+    expect(screen.queryByRole("heading", { name: /Godziny wejścia/ })).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Godziny wejścia" })).toHaveLength(1);
+    expect(screen.queryByText("Brak przedziałów do wyświetlenia.")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Sprzedaż wejść godzinowych jeszcze nieaktywna" }),
+    ).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Godziny wejścia" }));
+
+    const morning = await screen.findByRole("button", { name: /10:00–15:00/ });
+    const calendar = heading.closest("section");
+    expect(calendar?.contains(morning)).toBe(true);
+    expect(calendar?.contains(screen.getByRole("button", { name: /16:00–20:00/ }))).toBe(true);
+    expect(screen.getAllByRole("heading", { name: "Ogród otwarty w dniach:" })).toHaveLength(1);
+    expect(screen.queryByRole("heading", { name: /Godziny wejścia/ })).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Godziny wejścia" })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("button", { name: "Sprzedaż wejść godzinowych jeszcze nieaktywna" }),
+    ).toHaveLength(1);
+    expect(screen.queryByText("Brak przedziałów do wyświetlenia.")).toBeNull();
+    expect(document.querySelectorAll("section")).toHaveLength(1);
+  });
 });
 
 describe("entry slot checkout gate", () => {
